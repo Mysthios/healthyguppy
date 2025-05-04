@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "464529924086",
+    "project_id": "healthyguppy-95a43",
+    "storage_bucket": "healthyguppy-95a43.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:464529924086:android:0e40b890d90dad19b431d7",
+        "android_client_info": {
+          "package_name": "com.example.healthyguppy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyActIy26pwjmR2jrUIe5mIbRozs2NCW3T4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
