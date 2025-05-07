@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:healthyguppy/models/jadwal_model.dart';
 import 'package:healthyguppy/provider/jadwal_provider.dart';
 import 'package:healthyguppy/core/constant.dart';
+import 'package:healthyguppy/services/notification_service.dart';
 
 class PopupTambahUpdateJadwal extends ConsumerStatefulWidget {
   final int? index;
@@ -240,35 +241,45 @@ class _PopupTambahUpdateJadwalState
   }
 
   void _simpanJadwal() async {
-    if (selectedHari.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Pilih minimal satu hari!'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(16),
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      isLoading = true;
-    });
-
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    final newJadwal = JadwalModel(jam: jam, menit: menit, hari: selectedHari);
-    if (widget.index != null) {
-      ref
-          .read(jadwalListProvider.notifier)
-          .updateJadwal(widget.index!, newJadwal);
-    } else {
-      ref.read(jadwalListProvider.notifier).tambahJadwal(newJadwal);
-    }
-
-    if (mounted) {
-      Navigator.pop(context);
-    }
+  if (selectedHari.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Pilih minimal satu hari!'),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+    return;
   }
+
+  setState(() {
+    isLoading = true;
+  });
+
+  await Future.delayed(const Duration(milliseconds: 500));
+
+  final newJadwal = JadwalModel(jam: jam, menit: menit, hari: selectedHari);
+  if (widget.index != null) {
+    ref
+        .read(jadwalListProvider.notifier)
+        .updateJadwal(widget.index!.toString(), newJadwal);
+  } else {
+    ref.read(jadwalListProvider.notifier).tambahJadwal(newJadwal);
+  }
+
+  // Set notifikasi setelah jadwal disimpan
+  final notificationService = NotificationService();
+  notificationService.scheduleNotification(
+    id: DateTime.now().millisecondsSinceEpoch, // Unique ID for the notification
+    title: 'Pengingat Jadwal',
+    body: 'Jadwal Anda pada pukul ${jam.toString().padLeft(2, '0')}:${menit.toString().padLeft(2, '0')}',
+    scheduledDate: DateTime.now().add(Duration(hours: jam, minutes: menit)),
+  );
+
+  if (mounted) {
+    Navigator.pop(context);
+  }
+}
+
 }

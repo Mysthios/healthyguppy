@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/firebase_service.dart';
+import 'package:healthyguppy/services/firebase_service.dart';
+import '../services/firebase_jadwal_service.dart';
 import '../models/notifikasi_model.dart';
 
 final firebaseServiceProvider = Provider((ref) => FirebaseService());

@@ -8,9 +8,10 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await initializeNotification(); // WAJIB untuk local notifications
-
+  
+  final notificationService = NotificationService();
+  await notificationService.initialize(); // ✅ Panggil method initialize() dari OOP class
+  
   runApp(const ProviderScope(child: MyApp()));
 }
 

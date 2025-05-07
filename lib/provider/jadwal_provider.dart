@@ -1,17 +1,26 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:healthyguppy/models/jadwal_model.dart';
+import 'package:healthyguppy/services/firebase_service.dart';
 
 class JadwalNotifier extends StateNotifier<List<JadwalModel>> {
-  JadwalNotifier() : super([]);
+  final FirebaseService _firebaseService;
 
-  void tambahJadwal(JadwalModel jadwal) {
-    state = [...state, jadwal];
+  JadwalNotifier(this._firebaseService) : super([]) {
+    _loadJadwal();
   }
 
-  void updateJadwal(int index, JadwalModel newJadwal) {
-    final updatedList = [...state];
-    updatedList[index] = newJadwal;
-    state = updatedList;
+  void _loadJadwal() {
+    _firebaseService.getJadwal().listen((jadwalList) {
+      state = jadwalList;
+    });
+  }
+
+  Future<void> tambahJadwal(JadwalModel jadwal) async {
+    await _firebaseService.addJadwal(jadwal);
+  }
+
+  Future<void> updateJadwal(String id, JadwalModel newJadwal) async {
+    await _firebaseService.updateJadwal(id, newJadwal);
   }
 
   void hapusJadwal(int index) {
@@ -20,6 +29,7 @@ class JadwalNotifier extends StateNotifier<List<JadwalModel>> {
   }
 }
 
+final firebaseServiceProvider = Provider<FirebaseService>((ref) => FirebaseService());
 final jadwalListProvider = StateNotifierProvider<JadwalNotifier, List<JadwalModel>>(
-  (ref) => JadwalNotifier(),
+  (ref) => JadwalNotifier(ref.read(firebaseServiceProvider)),
 );
