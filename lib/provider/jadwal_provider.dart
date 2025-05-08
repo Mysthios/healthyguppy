@@ -23,13 +23,15 @@ class JadwalNotifier extends StateNotifier<List<JadwalModel>> {
     await _firebaseService.updateJadwal(id, newJadwal);
   }
 
-  void hapusJadwal(int index) {
-    final updatedList = [...state]..removeAt(index);
-    state = updatedList;
+  Future<void> hapusJadwal(String id) async {
+    await _firebaseService.deleteJadwal(id);
   }
 }
 
-final firebaseServiceProvider = Provider<FirebaseService>((ref) => FirebaseService());
-final jadwalListProvider = StateNotifierProvider<JadwalNotifier, List<JadwalModel>>(
-  (ref) => JadwalNotifier(ref.read(firebaseServiceProvider)),
+final firebaseServiceProvider = Provider<FirebaseService>(
+  (ref) => FirebaseService(),
 );
+final jadwalListProvider =
+    StateNotifierProvider<JadwalNotifier, List<JadwalModel>>(
+      (ref) => JadwalNotifier(ref.read(firebaseServiceProvider)),
+    );

@@ -22,11 +22,16 @@ class FirebaseService {
     });
   }
 
+  Future<void> deleteJadwal(String id) async {
+    await _db.collection('jadwal').doc(id).delete();
+  }
+
   Stream<List<JadwalModel>> getJadwal() {
     return _db.collection('jadwal').snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
         final data = doc.data();
         return JadwalModel(
+          id: doc.id, // <--- penting ini!
           jam: data['jam'],
           menit: data['menit'],
           hari: List<String>.from(data['hari']),

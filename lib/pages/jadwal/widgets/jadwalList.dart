@@ -15,24 +15,21 @@ class JadwalList extends ConsumerWidget {
       itemCount: jadwalList.length,
       itemBuilder: (context, index) {
         final jadwal = jadwalList[index];
-
         return GestureDetector(
           onTap: () {
             showDialog(
               context: context,
-              builder: (context) {
-                return PopupTambahUpdateJadwal(
-                  index: index,
-                  existingJadwal: jadwal,
-                );
-              },
+              builder: (_) => PopupTambahUpdateJadwal(
+                index: index,
+                existingJadwal: jadwal,
+              ),
             );
           },
           child: JadwalCard(
             jadwal: jadwal,
-            isActive: true, // atau sesuai logika on/off kamu
+            isActive: true,
             onToggle: () {
-              // logic toggle switch kalau ada
+              // Tambahkan logika on/off switch di sini kalau perlu
             },
           ),
         );

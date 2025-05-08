@@ -62,7 +62,6 @@ class _PopupTambahUpdateJadwalState
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
               ),
-              textAlign: TextAlign.left,
             ),
             const SizedBox(height: 20),
             Row(
@@ -70,10 +69,7 @@ class _PopupTambahUpdateJadwalState
               children: [
                 _timePicker(isJam: true),
                 const SizedBox(width: 8),
-                const Text(
-                  ":",
-                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                ),
+                const Text(":", style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
                 const SizedBox(width: 8),
                 _timePicker(isJam: false),
               ],
@@ -82,23 +78,9 @@ class _PopupTambahUpdateJadwalState
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: const [
-                SizedBox(
-                  width: 120,
-                  child: Text(
-                    'Jam',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, color: Colors.black),
-                  ),
-                ),
+                SizedBox(width: 120, child: Text('Jam', textAlign: TextAlign.center)),
                 SizedBox(width: 16),
-                SizedBox(
-                  width: 120,
-                  child: Text(
-                    'Menit',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, color: Colors.black),
-                  ),
-                ),
+                SizedBox(width: 120, child: Text('Menit', textAlign: TextAlign.center)),
               ],
             ),
             const SizedBox(height: 20),
@@ -110,11 +92,7 @@ class _PopupTambahUpdateJadwalState
                 return GestureDetector(
                   onTap: () {
                     setState(() {
-                      if (isSelected) {
-                        selectedHari.remove(hari);
-                      } else {
-                        selectedHari.add(hari);
-                      }
+                      isSelected ? selectedHari.remove(hari) : selectedHari.add(hari);
                     });
                   },
                   child: Container(
@@ -129,8 +107,7 @@ class _PopupTambahUpdateJadwalState
                       child: Text(
                         hari[0],
                         style: TextStyle(
-                          color:
-                              isSelected ? Colors.white : kSecondaryTextColor,
+                          color: isSelected ? Colors.white : kSecondaryTextColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -145,53 +122,33 @@ class _PopupTambahUpdateJadwalState
                 if (widget.index != null)
                   IconButton(
                     icon: Image.asset(
-                      'assets/icons/Hapus.png', // Ganti sesuai path file kamu
+                      'assets/icons/Hapus.png',
                       width: 24,
                       height: 24,
-                      color:
-                          Colors
-                              .orange, // Hanya berfungsi jika gambar hitam putih
+                      color: Colors.orange,
                     ),
                     onPressed: () {
-                      ref
-                          .read(jadwalListProvider.notifier)
-                          .hapusJadwal(widget.index!);
-                      Navigator.pop(context);
+                      final id = widget.existingJadwal?.id;
+                      if (id != null) {
+                        ref.read(jadwalListProvider.notifier).hapusJadwal(id);
+                        Navigator.pop(context);
+                      }
                     },
                   ),
-
                 const Spacer(),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'Batal',
-                    style: TextStyle(
-                      color: kPrimaryTextColor,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: const Text('Batal', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 ),
                 TextButton(
                   onPressed: isLoading ? null : _simpanJadwal,
-                  child:
-                      isLoading
-                          ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: kPrimaryColor,
-                            ),
-                          )
-                          : Text(
-                            'Oke',
-                            style: TextStyle(
-                              color: kPrimaryColor,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: kPrimaryColor),
+                        )
+                      : const Text('Oke', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: kPrimaryColor)),
                 ),
               ],
             ),
@@ -209,77 +166,62 @@ class _PopupTambahUpdateJadwalState
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: kSecondaryTextColor, width: 2),
       ),
-      child: Align(
-        alignment: Alignment.center, // Menjaga agar picker tetap terpusat
-        child: CupertinoPicker(
-          scrollController: FixedExtentScrollController(
-            initialItem: isJam ? jam : menit,
-          ),
-          itemExtent: 32,
-          backgroundColor: Colors.transparent,
-          onSelectedItemChanged: (value) {
-            setState(() {
-              if (isJam) {
-                jam = value;
-              } else {
-                menit = value;
-              }
-            });
-          },
-          children: List.generate(isJam ? 24 : 60, (index) {
-            return Container(
-              alignment: Alignment.center,
-              child: Text(
-                index.toString().padLeft(2, '0'),
-                style: const TextStyle(fontSize: 26, color: kPrimaryTextColor),
-              ),
-            );
-          }),
+      child: CupertinoPicker(
+        scrollController: FixedExtentScrollController(
+          initialItem: isJam ? jam : menit,
         ),
+        itemExtent: 32,
+        backgroundColor: Colors.transparent,
+        onSelectedItemChanged: (value) {
+          setState(() {
+            isJam ? jam = value : menit = value;
+          });
+        },
+        children: List.generate(isJam ? 24 : 60, (index) {
+          return Center(
+            child: Text(index.toString().padLeft(2, '0'), style: const TextStyle(fontSize: 26, color: kPrimaryTextColor)),
+          );
+        }),
       ),
     );
   }
 
   void _simpanJadwal() async {
-  if (selectedHari.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Pilih minimal satu hari!'),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-      ),
-    );
-    return;
+    if (selectedHari.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pilih minimal satu hari!'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(16),
+        ),
+      );
+      return;
+    }
+
+    setState(() => isLoading = true);
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    final newJadwal = JadwalModel(jam: jam, menit: menit, hari: selectedHari);
+
+    if (widget.index != null && widget.existingJadwal?.id != null) {
+      ref.read(jadwalListProvider.notifier).updateJadwal(widget.existingJadwal!.id!, newJadwal);
+    } else {
+      ref.read(jadwalListProvider.notifier).tambahJadwal(newJadwal);
+    }
+
+    final notificationService = NotificationService();
+    final baseId = DateTime.now().millisecondsSinceEpoch;
+
+    for (var hari in selectedHari) {
+      notificationService.scheduleNotification(
+        id: baseId + hari.hashCode,
+        title: 'Pengingat Jadwal',
+        body: 'Jadwal Anda pada pukul ${jam.toString().padLeft(2, '0')}:${menit.toString().padLeft(2, '0')}',
+        scheduledDate: DateTime.now().add(Duration(hours: jam, minutes: menit)),
+      );
+    }
+
+    if (mounted) Navigator.pop(context);
   }
-
-  setState(() {
-    isLoading = true;
-  });
-
-  await Future.delayed(const Duration(milliseconds: 500));
-
-  final newJadwal = JadwalModel(jam: jam, menit: menit, hari: selectedHari);
-  if (widget.index != null) {
-    ref
-        .read(jadwalListProvider.notifier)
-        .updateJadwal(widget.index!.toString(), newJadwal);
-  } else {
-    ref.read(jadwalListProvider.notifier).tambahJadwal(newJadwal);
-  }
-
-  // Set notifikasi setelah jadwal disimpan
-  final notificationService = NotificationService();
-  notificationService.scheduleNotification(
-    id: DateTime.now().millisecondsSinceEpoch, // Unique ID for the notification
-    title: 'Pengingat Jadwal',
-    body: 'Jadwal Anda pada pukul ${jam.toString().padLeft(2, '0')}:${menit.toString().padLeft(2, '0')}',
-    scheduledDate: DateTime.now().add(Duration(hours: jam, minutes: menit)),
-  );
-
-  if (mounted) {
-    Navigator.pop(context);
-  }
-}
-
 }
