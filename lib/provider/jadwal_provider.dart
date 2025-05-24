@@ -21,11 +21,25 @@ class JadwalNotifier extends StateNotifier<List<JadwalModel>> {
 
   Future<void> updateJadwal(String id, JadwalModel newJadwal) async {
     await _firebaseService.updateJadwal(id, newJadwal);
+    state = [
+    for (final jadwal in state)
+      if (jadwal.id == id) newJadwal else jadwal
+  ];
   }
 
   Future<void> hapusJadwal(String id) async {
     await _firebaseService.deleteJadwal(id);
   }
+
+  Future<void> toggleAktif(String id, bool statusBaru) async {
+  await _firebaseService.updateJadwal(id, JadwalModel(
+    id: id,
+    jam: state.firstWhere((j) => j.id == id).jam,
+    menit: state.firstWhere((j) => j.id == id).menit,
+    hari: state.firstWhere((j) => j.id == id).hari,
+    isActive: statusBaru,
+  ));
+}
 }
 
 final firebaseServiceProvider = Provider<FirebaseService>(

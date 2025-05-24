@@ -11,6 +11,7 @@ class FirebaseService {
       'jam': jadwal.jam,
       'menit': jadwal.menit,
       'hari': jadwal.hari,
+      'isActive': jadwal.isActive,
     });
   }
 
@@ -19,6 +20,7 @@ class FirebaseService {
       'jam': jadwal.jam,
       'menit': jadwal.menit,
       'hari': jadwal.hari,
+      'isActive': jadwal.isActive,
     });
   }
 
@@ -52,4 +54,44 @@ class FirebaseService {
       }).toList();
     });
   }
+
+
+  //----------------------------------
+  Future<List<NotifikasiModel>> getActiveSchedules() async {
+  final snapshot = await _db.collection('jadwal').get();
+  final now = DateTime.now();
+  final today = now.weekday;
+
+  List<NotifikasiModel> scheduledNotifs = [];
+
+  for (var doc in snapshot.docs) {
+    final data = doc.data();
+    if (data['isActive'] == true) {
+      final hariList = List<String>.from(data['hari'] ?? []);
+      if (hariList.contains(_getHariFromInt(today))) {
+        final jam = data['jam'] ?? 0;
+        final menit = data['menit'] ?? 0;
+        final scheduledTime = DateTime(now.year, now.month, now.day, jam, menit);
+
+        if (scheduledTime.isAfter(now)) {
+          scheduledNotifs.add(
+            NotifikasiModel(
+              judul: 'Pengingat Jadwal',
+              isi: 'Jadwal hari ini jam $jam:$menit',
+              waktu: scheduledTime,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  return scheduledNotifs;
+}
+
+String _getHariFromInt(int weekday) {
+  const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+  return days[weekday - 1];
+}
+
 }

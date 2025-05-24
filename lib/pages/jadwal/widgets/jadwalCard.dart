@@ -45,8 +45,8 @@ class JadwalCard extends StatelessWidget {
             const Spacer(),
             Switch(
               value: isActive,
-              onChanged: (value) {
-                onToggle();
+              onChanged: (val) {
+                onToggle(); // akan dipanggil dari parent
               },
               activeColor: kPrimaryColor,
               inactiveTrackColor: Colors.grey.shade300,

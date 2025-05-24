@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:healthyguppy/models/jadwal_model.dart';
 import 'package:healthyguppy/pages/jadwal/widgets/jadwalCard.dart';
 import 'package:healthyguppy/pages/jadwal/widgets/popupJadwal.dart';
 import 'package:healthyguppy/provider/jadwal_provider.dart';
@@ -19,17 +20,28 @@ class JadwalList extends ConsumerWidget {
           onTap: () {
             showDialog(
               context: context,
-              builder: (_) => PopupTambahUpdateJadwal(
-                index: index,
-                existingJadwal: jadwal,
-              ),
+              builder:
+                  (_) => PopupTambahUpdateJadwal(
+                    index: index,
+                    existingJadwal: jadwal,
+                  ),
             );
           },
           child: JadwalCard(
             jadwal: jadwal,
-            isActive: true,
-            onToggle: () {
-              // Tambahkan logika on/off switch di sini kalau perlu
+            isActive: jadwal.isActive,
+            onToggle: () async {
+              final updatedJadwal = JadwalModel(
+                id: jadwal.id,
+                jam: jadwal.jam,
+                menit: jadwal.menit,
+                hari: jadwal.hari,
+                isActive: !jadwal.isActive, // Toggle nilainya
+              );
+
+              await ref
+                  .read(jadwalListProvider.notifier)
+                  .updateJadwal(jadwal.id!, updatedJadwal);
             },
           ),
         );

@@ -1,18 +1,17 @@
+// provider/notifikasi_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:healthyguppy/services/firebase_service.dart';
-import '../services/firebase_jadwal_service.dart';
-import '../models/notifikasi_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:healthyguppy/models/notifikasi_model.dart';
 
-final firebaseServiceProvider = Provider((ref) => FirebaseService());
-
-final notifikasiStreamProvider = StreamProvider<List<NotifikasiModel>>((ref) {
-  final service = ref.watch(firebaseServiceProvider);
-  return service.getNotifications();
+final notifikasiListProvider = StreamProvider<List<NotifikasiModel>>((ref) {
+  return FirebaseFirestore.instance
+      .collection('notifikasi')
+      .orderBy('waktu', descending: true)
+      .snapshots()
+      .map((snapshot) {
+        return snapshot.docs.map((doc) {
+          final data = doc.data();
+          return NotifikasiModel.fromMap(data);
+        }).toList();
+      });
 });
-
-final addNotificationProvider = Provider((ref) {
-  final service = ref.read(firebaseServiceProvider);
-  return (NotifikasiModel notif) => service.addNotification(notif);
-});
-
-//besok bisa ini
