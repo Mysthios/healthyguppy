@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:healthyguppy/core/constant.dart';
-import 'package:healthyguppy/pages/homepage/widgets/notifikasiHeaderHomepage.dart';
+import 'package:healthyguppy/pages/homepage/widgets/notifikasi_profile_header.dart';
 
 class HeaderDanSalam extends StatelessWidget {
   const HeaderDanSalam({super.key});
@@ -10,7 +10,7 @@ class HeaderDanSalam extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: const [
-        NotificationHeaderHomepage(),
+        NotificationProfileHeader(),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(

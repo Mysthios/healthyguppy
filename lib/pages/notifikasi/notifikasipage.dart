@@ -18,7 +18,6 @@ class Notifikasipage extends ConsumerWidget {
           if (notifs.isEmpty) {
             return const Center(child: Text('Belum ada notifikasi.'));
           }
-
           return ListView.builder(
             itemCount: notifs.length,
             itemBuilder: (context, index) {

@@ -55,43 +55,67 @@ class FirebaseService {
     });
   }
 
-
   //----------------------------------
   Future<List<NotifikasiModel>> getActiveSchedules() async {
-  final snapshot = await _db.collection('jadwal').get();
-  final now = DateTime.now();
-  final today = now.weekday;
+    final snapshot = await _db.collection('jadwal').get();
+    final now = DateTime.now();
+    final today = now.weekday;
 
-  List<NotifikasiModel> scheduledNotifs = [];
+    List<NotifikasiModel> scheduledNotifs = [];
 
-  for (var doc in snapshot.docs) {
-    final data = doc.data();
-    if (data['isActive'] == true) {
-      final hariList = List<String>.from(data['hari'] ?? []);
-      if (hariList.contains(_getHariFromInt(today))) {
-        final jam = data['jam'] ?? 0;
-        final menit = data['menit'] ?? 0;
-        final scheduledTime = DateTime(now.year, now.month, now.day, jam, menit);
-
-        if (scheduledTime.isAfter(now)) {
-          scheduledNotifs.add(
-            NotifikasiModel(
-              judul: 'Pengingat Jadwal',
-              isi: 'Jadwal hari ini jam $jam:$menit',
-              waktu: scheduledTime,
-            ),
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      if (data['isActive'] == true) {
+        final hariList = List<String>.from(data['hari'] ?? []);
+        if (hariList.contains(_getHariFromInt(today))) {
+          final jam = data['jam'] ?? 0;
+          final menit = data['menit'] ?? 0;
+          final scheduledTime = DateTime(
+            now.year,
+            now.month,
+            now.day,
+            jam,
+            menit,
           );
+
+          if (scheduledTime.isAfter(now)) {
+            scheduledNotifs.add(
+              NotifikasiModel(
+                judul: 'Pengingat Jadwal',
+                isi: 'Jadwal hari ini jam $jam:$menit',
+                waktu: scheduledTime,
+              ),
+            );
+          }
         }
       }
     }
+    return scheduledNotifs;
   }
 
-  return scheduledNotifs;
-}
-
-String _getHariFromInt(int weekday) {
-  const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-  return days[weekday - 1];
+  String _getHariFromInt(int weekday) {
+    const days = [
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+      'Minggu',
+    ];
+    return days[weekday - 1];
+  }
+  
+  Future<void> deleteOldNotifications() async {
+  final now = DateTime.now();
+  final twoDaysAgo = now.subtract(const Duration(days: 2));
+  final snapshot = await _db
+      .collection('notifikasi')
+      .where('waktu', isLessThan: twoDaysAgo)
+      .get();
+  for (var doc in snapshot.docs) {
+    await doc.reference.delete();
+  }
 }
 
 }

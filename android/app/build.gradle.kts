@@ -22,17 +22,24 @@ android {
 
     defaultConfig {
         applicationId = "com.example.healthyguppy"
-        minSdk = flutter.minSdkVersion
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
     buildTypes {
-        getByName("release") {
-            signingConfig = signingConfigs.getByName("debug")
-        }
+    getByName("release") {
+        signingConfig = signingConfigs.getByName("debug")
+        isMinifyEnabled = true
+        isShrinkResources = true
+        proguardFiles(
+            getDefaultProguardFile("proguard-android-optimize.txt"),
+            "proguard-rules.pro"
+        )
     }
+}
+
 }
 
 flutter {
