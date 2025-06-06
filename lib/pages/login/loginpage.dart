@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:healthyguppy/pages/register/registerpage.dart';
@@ -17,6 +18,7 @@ class _LoginScreenState extends ConsumerState<LoginPage> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _isDialogShowing = false; // Tambahan untuk melacak status dialog
 
   @override
   void dispose() {
@@ -26,32 +28,38 @@ class _LoginScreenState extends ConsumerState<LoginPage> {
   }
 
   void _showLoadingDialog() {
+    _isDialogShowing = true;
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => Center(
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          width: 120,
-          height: 120,
-          child: const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text(
-                'Masuk...',
-                style: TextStyle(fontSize: 14),
+      builder:
+          (_) => Center(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
               ),
-            ],
+              width: 120,
+              height: 120,
+              child: const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Masuk...', style: TextStyle(fontSize: 14)),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
     );
+  }
+
+  void _hideLoadingDialog() {
+    if (_isDialogShowing && mounted) {
+      _isDialogShowing = false;
+      Navigator.of(context).pop();
+    }
   }
 
   Future<void> _login() async {
@@ -70,16 +78,25 @@ class _LoginScreenState extends ConsumerState<LoginPage> {
         _passwordController.text,
       );
 
+      // Tutup loading dialog
+      _hideLoadingDialog();
+
       if (user != null && mounted) {
-        Navigator.of(context).pop(); // Close loading overlay
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomePage()),
-        );
+        await Future.delayed(
+          const Duration(milliseconds: 300),
+        ); // delay kecil supaya auth stabil
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const HomePage()),
+          );
+        }
       }
     } catch (e) {
+      // Tutup loading dialog jika terjadi error
+      _hideLoadingDialog();
+
       if (mounted) {
-        Navigator.of(context).pop(); // Close loading overlay
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString().replaceAll('Exception: ', '')),
@@ -142,11 +159,7 @@ class _LoginScreenState extends ConsumerState<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 60),
-              Icon(
-                Icons.lock_outline,
-                size: 80,
-                color: Colors.blue[600],
-              ),
+              Icon(Icons.lock_outline, size: 80, color: Colors.blue[600]),
               const SizedBox(height: 24),
               Text(
                 'Selamat Datang',
@@ -160,10 +173,7 @@ class _LoginScreenState extends ConsumerState<LoginPage> {
               const SizedBox(height: 8),
               Text(
                 'Masuk ke akun Anda',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 48),
@@ -187,8 +197,9 @@ class _LoginScreenState extends ConsumerState<LoginPage> {
                         if (value == null || value.isEmpty) {
                           return 'Email tidak boleh kosong';
                         }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                            .hasMatch(value)) {
+                        if (!RegExp(
+                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                        ).hasMatch(value)) {
                           return 'Format email tidak valid';
                         }
                         return null;
@@ -275,10 +286,7 @@ class _LoginScreenState extends ConsumerState<LoginPage> {
                 children: [
                   Text(
                     'Belum punya akun? ',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 16),
                   ),
                   GestureDetector(
                     onTap: () {
