@@ -4,11 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:healthyguppy/pages/login/loginpage.dart';
 import 'package:healthyguppy/pages/homepage/homepage.dart';
-
-// Provider untuk auth state stream
-final authStateProvider = StreamProvider<User?>((ref) {
-  return FirebaseAuth.instance.authStateChanges();
-});
+import 'package:healthyguppy/provider/jadwal_provider.dart';
+import 'package:healthyguppy/services/jadwal_checker_service.dart'; // Import jadwal checker
 
 class AuthWrapper extends ConsumerStatefulWidget {
   const AuthWrapper({Key? key}) : super(key: key);
@@ -20,11 +17,17 @@ class AuthWrapper extends ConsumerStatefulWidget {
 class _AuthWrapperState extends ConsumerState<AuthWrapper> {
   bool _splashFinished = false;
   Timer? _splashTimer;
+  JadwalCheckerService? _jadwalChecker;
 
   @override
   void initState() {
     super.initState();
     _startSplashTimer();
+    _initJadwalChecker();
+  }
+
+  void _initJadwalChecker() {
+    _jadwalChecker = JadwalCheckerService();
   }
 
   void _startSplashTimer() {
@@ -60,12 +63,39 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper> {
   @override
   void dispose() {
     _splashTimer?.cancel();
+    _jadwalChecker?.stopChecking();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
+
+    // Listen to auth state changes untuk handle jadwal checker
+    ref.listen<AsyncValue<User?>>(authStateProvider, (previous, current) {
+      current.when(
+        data: (user) {
+          if (user != null) {
+            // User login, start jadwal checker
+            print('AuthWrapper: User logged in, starting jadwal checker');
+            _jadwalChecker?.restartForUser();
+          } else {
+            // User logout, stop jadwal checker
+            print('AuthWrapper: User logged out, stopping jadwal checker');
+            _jadwalChecker?.stopChecking();
+            // Clear jadwal dari state
+            ref.read(jadwalListProvider.notifier).clearJadwal();
+          }
+        },
+        loading: () {
+          // Loading state
+        },
+        error: (error, stack) {
+          print('AuthWrapper: Auth error: $error');
+          _jadwalChecker?.stopChecking();
+        },
+      );
+    });
 
     // Show splash until timer finished AND auth resolved
     final authResolved = authState.when(
@@ -258,3 +288,49 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
   }
 }
 
+// Widget untuk melindungi halaman yang memerlukan authentication
+class RequireAuth extends ConsumerWidget {
+  final Widget child;
+  final Widget? fallback;
+
+  const RequireAuth({
+    Key? key,
+    required this.child,
+    this.fallback,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isLoggedIn = ref.watch(isLoggedInProvider);
+
+    if (isLoggedIn) {
+      return child;
+    } else {
+      return fallback ?? 
+        const Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.lock_outline,
+                  size: 64,
+                  color: Colors.grey,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Anda harus login terlebih dahulu',
+                  style: TextStyle(fontSize: 16),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Silakan login untuk mengakses fitur ini',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        );
+    }
+  }
+}
