@@ -94,7 +94,7 @@ class FirebaseService {
     await _db.collection('notifikasi').add({
       ...notif.toMap(),
       'userId': _currentUserId, // Tambahkan userId
-      'createdAt': FieldValue.serverTimestamp(),
+      'waktu': FieldValue.serverTimestamp(),
     });
   }
 
@@ -106,7 +106,7 @@ class FirebaseService {
     return _db
         .collection('notifikasi')
         .where('userId', isEqualTo: _currentUserId) // Filter berdasarkan userId
-        .orderBy('createdAt', descending: true)
+        .orderBy('waktu', descending: true)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {

@@ -8,140 +8,115 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin
   _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
-  // Counter untuk ID unik yang aman - RESET ke 1
   static int _notificationCounter = 1;
 
   static Future<void> init() async {
-    print('🚀 Starting NotificationService initialization...');
-    
-    // LANGKAH 1: Bersihkan SEMUA notifikasi lama terlebih dahulu
+    // Clean up old notifications
     try {
-      print('🧹 Cleaning up old notifications...');
       await _flutterLocalNotificationsPlugin.cancelAll();
-      print('✅ All old notifications cancelled');
     } catch (e) {
-      print('⚠️ Error cancelling old notifications: $e');
+      print('Error canceling notifications: $e');
     }
 
-    // LANGKAH 2: Reset counter ke 1
+    // Reset counter to 1
     _notificationCounter = 1;
     await _resetNotificationCounter();
-    print('🔄 Notification counter reset to 1');
 
-    // LANGKAH 3: Initialize timezone
+    // Initialize timezone
     try {
       tz.initializeTimeZones();
       final String timeZoneName = 'Asia/Jakarta';
       tz.setLocalLocation(tz.getLocation(timeZoneName));
-      print('🌏 Timezone set to $timeZoneName');
+      print('Timezone initialized: $timeZoneName');
     } catch (e) {
-      print('⚠️ Error setting timezone: $e');
+      print('Error initializing timezone: $e');
     }
 
-    // LANGKAH 4: Initialize notification plugin
+    // Initialize notification plugin
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
+    
     const InitializationSettings initializationSettings =
         InitializationSettings(android: initializationSettingsAndroid);
-    
-    try {
-      await _flutterLocalNotificationsPlugin.initialize(initializationSettings);
-      print('📱 Notification plugin initialized');
-    } catch (e) {
-      print('❌ Error initializing notification plugin: $e');
-      rethrow;
-    }
 
-    // LANGKAH 5: Create notification channels
-    final androidImplementation = _flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final bool? initialized = await _flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        print('Notification tapped: ${response.payload}');
+      },
+    );
+
+    print('Notification plugin initialized: $initialized');
+
+    // Create notification channels
+    final androidImplementation =
+        _flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
 
     if (androidImplementation != null) {
-      try {
-        // Channel untuk foreground service
-        const AndroidNotificationChannel foregroundChannel =
-            AndroidNotificationChannel(
-              'my_foreground',
-              'Foreground Service Channel',
-              description: 'Channel untuk notifikasi background service HealthyGuppy',
-              importance: Importance.low,
-            );
+      // Channel untuk foreground service
+      const AndroidNotificationChannel foregroundChannel =
+          AndroidNotificationChannel(
+            'my_foreground',
+            'Foreground Service Channel',
+            description:
+                'Channel untuk notifikasi background service HealthyGuppy',
+            importance: Importance.low,
+          );
 
-        // Channel untuk jadwal notifikasi
-        const AndroidNotificationChannel jadwalChannel =
-            AndroidNotificationChannel(
-              'jadwal_channel',
-              'Jadwal Notifikasi',
-              description: 'Channel untuk notifikasi jadwal',
-              importance: Importance.max,
-            );
+      // Channel untuk jadwal notifikasi
+      const AndroidNotificationChannel jadwalChannel =
+          AndroidNotificationChannel(
+            'jadwal_channel',
+            'Jadwal Notifikasi',
+            description: 'Channel untuk notifikasi jadwal',
+            importance: Importance.max,
+          );
 
-        // Buat kedua channel
-        await androidImplementation.createNotificationChannel(foregroundChannel);
-        await androidImplementation.createNotificationChannel(jadwalChannel);
-        
-        print('📺 Notification channels created successfully');
-      } catch (e) {
-        print('❌ Error creating notification channels: $e');
-        rethrow;
-      }
+      await androidImplementation.createNotificationChannel(foregroundChannel);
+      await androidImplementation.createNotificationChannel(jadwalChannel);
+      print('Notification channels created');
     }
-
-    print('✅ NotificationService initialized successfully');
   }
 
-  // RESET counter ke 1 (untuk debugging)
   static Future<void> _resetNotificationCounter() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('notification_counter', 1);
       _notificationCounter = 1;
-      print('🔄 Counter reset to 1');
     } catch (e) {
-      print('⚠️ Error resetting counter: $e');
+      print('Error resetting notification counter: $e');
     }
   }
 
-  // ID Generator SUPER AMAN - hanya counter sederhana
   static int generateSafeId() {
     _notificationCounter++;
-    if (_notificationCounter > 999999) { // Maksimal 999,999 (sangat aman)
+    if (_notificationCounter > 999999) {
       _notificationCounter = 1;
     }
-    
-    // TIDAK menyimpan ke SharedPreferences setiap kali untuk menghindari overhead
-    // Hanya simpan setiap 100 increment
+
     if (_notificationCounter % 100 == 0) {
       _saveNotificationCounter();
     }
-    
-    print('🆔 Generated safe ID: $_notificationCounter');
+
     return _notificationCounter;
   }
 
-  // ID Generator dengan timestamp sederhana (ALTERNATIF)
   static int generateTimestampId() {
     final now = DateTime.now();
-    // Gunakan menit dalam hari + detik, tapi tetap kecil
-    final minutesInDay = (now.hour * 60) + now.minute; // Max 1440
-    final seconds = now.second; // Max 59
-    
-    // Gabung dengan cara aman: menit*100 + detik
-    // Maksimal: 1440*100 + 59 = 144,059 (sangat aman)
+    final minutesInDay = (now.hour * 60) + now.minute;
+    final seconds = now.second;
     int id = (minutesInDay * 100) + seconds;
-    
-    // Jika 0, set ke 1
+
     if (id == 0) id = 1;
-    
-    print('⏰ Generated timestamp ID: $id');
     return id;
   }
 
-  // ID Generator dengan random sederhana
   static int generateRandomId() {
     final random = Random();
-    int id = random.nextInt(999999) + 1; // 1 sampai 999,999
-    print('🎲 Generated random ID: $id');
+    int id = random.nextInt(999999) + 1;
     return id;
   }
 
@@ -149,9 +124,7 @@ class NotificationService {
     try {
       final prefs = await SharedPreferences.getInstance();
       _notificationCounter = prefs.getInt('notification_counter') ?? 1;
-      print('📖 Loaded counter: $_notificationCounter');
     } catch (e) {
-      print('⚠️ Error loading counter: $e');
       _notificationCounter = 1;
     }
   }
@@ -161,7 +134,7 @@ class NotificationService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('notification_counter', _notificationCounter);
     } catch (e) {
-      print('⚠️ Error saving counter: $e');
+      print('Error saving notification counter: $e');
     }
   }
 
@@ -170,9 +143,8 @@ class NotificationService {
     required String title,
     required String body,
   }) async {
-    // Gunakan generateRandomId() untuk menghindari konflik
     final safeId = id ?? generateRandomId();
-    print('📢 Showing notification with ID: $safeId');
+    print('Showing notification with ID: $safeId');
 
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
@@ -184,6 +156,8 @@ class NotificationService {
           showWhen: true,
           enableVibration: true,
           playSound: true,
+          ticker: 'Notification',
+          largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
         );
     const NotificationDetails platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
@@ -196,12 +170,11 @@ class NotificationService {
         body,
         platformChannelSpecifics,
       );
-      print('✅ Notification shown successfully with ID: $safeId');
+      print('Notification shown successfully');
     } catch (e) {
-      print('❌ Error showing notification: $e');
-      // Coba lagi dengan ID yang berbeda
+      print('Error showing notification: $e');
+      // Retry with different ID
       final retryId = generateRandomId();
-      print('🔄 Retrying with ID: $retryId');
       try {
         await _flutterLocalNotificationsPlugin.show(
           retryId,
@@ -209,38 +182,38 @@ class NotificationService {
           body,
           platformChannelSpecifics,
         );
-        print('✅ Retry successful with ID: $retryId');
+        print('Notification retry successful with ID: $retryId');
       } catch (retryError) {
-        print('❌ Retry failed: $retryError');
+        print('Notification retry failed: $retryError');
         rethrow;
       }
     }
   }
 
-  Future<void> scheduleNotification({
+  static Future<void> scheduleNotification({
     int? id,
     required String title,
     required String body,
     required DateTime scheduledDate,
   }) async {
-    // Gunakan generateRandomId() untuk menghindari konflik
     final safeId = id ?? generateRandomId();
-    
-    print('⏰ Scheduling notification with ID: $safeId for: $scheduledDate');
-    
-    // Validasi waktu
+    print('Scheduling notification with ID: $safeId for: $scheduledDate');
+
+    // Validate time
     final now = DateTime.now();
+    DateTime finalScheduledDate = scheduledDate;
     if (scheduledDate.isBefore(now)) {
-      print('⚠️ Scheduled time is in the past! Adjusting to 1 minute from now.');
-      scheduledDate = now.add(const Duration(minutes: 1));
+      finalScheduledDate = now.add(const Duration(minutes: 1));
+      print('Scheduled date was in the past, adjusted to: $finalScheduledDate');
     }
 
     try {
-      // Pastikan timezone conversion benar
-      final tz.TZDateTime scheduledTZ = tz.TZDateTime.from(scheduledDate, tz.local);
-      
-      print('📅 Scheduled TZ DateTime: $scheduledTZ');
-      print('🕐 Current TZ DateTime: ${tz.TZDateTime.now(tz.local)}');
+      final tz.TZDateTime scheduledTZ = tz.TZDateTime.from(
+        finalScheduledDate,
+        tz.local,
+      );
+
+      print('Scheduled TZ DateTime: $scheduledTZ');
 
       await _flutterLocalNotificationsPlugin.zonedSchedule(
         safeId,
@@ -257,24 +230,23 @@ class NotificationService {
             showWhen: true,
             enableVibration: true,
             playSound: true,
+            ticker: 'Scheduled Notification',
+            largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
           ),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        matchDateTimeComponents: DateTimeComponents.time,
       );
-
-      print('✅ Notification scheduled successfully with ID: $safeId');
-      
+      print('Notification scheduled successfully');
     } catch (e) {
-      print('❌ Error scheduling notification: $e');
-      
-      // Coba lagi dengan ID yang berbeda
+      print('Error scheduling notification: $e');
+      // Retry with different ID
       final retryId = generateRandomId();
-      print('🔄 Retrying schedule with ID: $retryId');
-      
       try {
-        final tz.TZDateTime scheduledTZ = tz.TZDateTime.from(scheduledDate, tz.local);
-        
+        final tz.TZDateTime scheduledTZ = tz.TZDateTime.from(
+          finalScheduledDate,
+          tz.local,
+        );
+
         await _flutterLocalNotificationsPlugin.zonedSchedule(
           retryId,
           title,
@@ -290,99 +262,70 @@ class NotificationService {
               showWhen: true,
               enableVibration: true,
               playSound: true,
+              ticker: 'Scheduled Notification',
+              largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
             ),
           ),
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          matchDateTimeComponents: DateTimeComponents.time,
         );
-        
-        print('✅ Retry schedule successful with ID: $retryId');
+        print('Notification retry scheduled successfully with ID: $retryId');
       } catch (retryError) {
-        print('❌ Retry schedule failed: $retryError');
+        print('Notification schedule retry failed: $retryError');
         rethrow;
       }
     }
   }
 
-  // Method untuk FORCE CLEANUP semua notifikasi
   static Future<void> forceCleanup() async {
-    print('🧹 FORCE CLEANUP: Cancelling all notifications...');
     try {
       await _flutterLocalNotificationsPlugin.cancelAll();
-      print('✅ All notifications cancelled');
-      
-      // Reset counter
       await _resetNotificationCounter();
-      print('🔄 Counter reset');
       
-      // Clear SharedPreferences yang berkaitan dengan notifikasi
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('notification_counter');
-      print('🗑️ SharedPreferences cleared');
-      
+      print('Force cleanup completed');
     } catch (e) {
-      print('❌ Error during force cleanup: $e');
+      print('Error during force cleanup: $e');
     }
   }
 
   static Future<void> cancelAllNotifications() async {
     try {
       await _flutterLocalNotificationsPlugin.cancelAll();
-      print('🗑️ Cancelled all notifications');
+      print('All notifications canceled');
     } catch (e) {
-      print('❌ Error cancelling all notifications: $e');
+      print('Error canceling notifications: $e');
     }
   }
 
-  static Future<List<PendingNotificationRequest>> getPendingNotifications() async {
+  static Future<List<PendingNotificationRequest>>
+  getPendingNotifications() async {
     try {
-      final pending = await _flutterLocalNotificationsPlugin.pendingNotificationRequests();
-      print('📋 Found ${pending.length} pending notifications');
+      final pending =
+          await _flutterLocalNotificationsPlugin.pendingNotificationRequests();
+      print('Pending notifications count: ${pending.length}');
       return pending;
     } catch (e) {
-      print('❌ Error getting pending notifications: $e');
+      print('Error getting pending notifications: $e');
       return [];
     }
   }
 
-  // Method untuk testing dengan ID aman
+  // Method untuk testing notifikasi
   static Future<void> testNotification() async {
-    print('🧪 Testing immediate notification...');
     await showNotification(
       title: 'Test Notification',
-      body: 'This is a test notification with safe ID generation.',
+      body: 'Ini adalah test notifikasi. Jika muncul, berarti notifikasi berfungsi!',
     );
   }
 
+  // Method untuk testing scheduled notification
   static Future<void> testScheduledNotification() async {
-    print('🧪 Testing scheduled notification in 10 seconds...');
     final scheduledTime = DateTime.now().add(const Duration(seconds: 10));
-    final service = NotificationService();
-    await service.scheduleNotification(
-      title: 'Test Scheduled',
-      body: 'This scheduled notification should appear in 10 seconds',
+    await scheduleNotification(
+      title: 'Test Scheduled Notification',
+      body: 'Ini adalah test scheduled notifikasi setelah 10 detik!',
       scheduledDate: scheduledTime,
     );
-  }
-
-  // Method untuk debugging lengkap
-  static Future<void> debugNotificationInfo() async {
-    print('📊 === NOTIFICATION DEBUG INFO ===');
-    print('🔢 Current counter: $_notificationCounter');
-    
-    final pending = await getPendingNotifications();
-    print('⏳ Pending notifications: ${pending.length}');
-    
-    for (var notif in pending) {
-      print('   - ID: ${notif.id}, Title: ${notif.title}');
-    }
-    
-    // Test ID generators
-    print('🆔 Test ID generators:');
-    print('   - Safe ID: ${generateSafeId()}');
-    print('   - Timestamp ID: ${generateTimestampId()}');
-    print('   - Random ID: ${generateRandomId()}');
-    
-    print('================================');
   }
 }

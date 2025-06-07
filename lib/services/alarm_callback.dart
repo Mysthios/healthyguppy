@@ -12,7 +12,7 @@ void alarmCallback() async {
 
   final id = DateTime.now().millisecondsSinceEpoch ~/ 1000;
   await NotificationService.showNotification(
-    id: id,
+    // id: id,
     title: title,
     body: body,
   );

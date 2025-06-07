@@ -56,7 +56,7 @@ class JadwalCheckerService {
           
           // Kirim notifikasi
           await NotificationService.showNotification(
-            id: now.millisecondsSinceEpoch ~/ 1000,
+            // id: now.millisecondsSinceEpoch ~/ 1000,
             title: 'Pengingat Jadwal',
             body: 'Sekarang sudah jam ${jam.toString().padLeft(2, '0')}:${menit.toString().padLeft(2, '0')} sesuai jadwal!',
           );
@@ -85,7 +85,7 @@ class JadwalCheckerService {
         'isi': body,
         'waktu': Timestamp.fromDate(time),
         'userId': _currentUserId,
-        'createdAt': FieldValue.serverTimestamp(),
+        'waktu': FieldValue.serverTimestamp(),
         'isRead': false, // Tambahan field untuk tracking baca/belum
       });
     } catch (e) {
