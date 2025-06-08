@@ -33,7 +33,6 @@ class HeaderJadwal extends StatelessWidget {
               ],
             ),
           ),
-          Image.asset('assets/images/Notification.png', width: 32),
       
         ],
       ),

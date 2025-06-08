@@ -193,4 +193,24 @@ class FirebaseService {
     // Method ini bisa dipanggil saat logout jika diperlukan
     // Untuk sementara hanya untuk keperluan development
   }
+
+  Future<void> clearAllNotifications() async {
+  if (_currentUserId == null) return;
+  
+  try {
+    final snapshot = await _db
+        .collection('notifikasi')
+        .where('userId', isEqualTo: _currentUserId)
+        .get();
+    
+    final batch = _db.batch();
+    for (var doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  } catch (e) {
+    print('Error clearing notifications: $e');
+    rethrow;
+  }
+}
 }

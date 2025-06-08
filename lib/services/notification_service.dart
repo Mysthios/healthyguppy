@@ -276,6 +276,16 @@ class NotificationService {
     }
   }
 
+  // 🔥 METHOD YANG HILANG - untuk cancel single notification by ID
+  static Future<void> cancelNotification(int id) async {
+    try {
+      await _flutterLocalNotificationsPlugin.cancel(id);
+      print('✅ Cancelled notification with ID: $id');
+    } catch (e) {
+      print('❌ Error cancelling notification ID $id: $e');
+    }
+  }
+
   static Future<void> forceCleanup() async {
     try {
       await _flutterLocalNotificationsPlugin.cancelAll();

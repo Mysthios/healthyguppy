@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:healthyguppy/pages/auth_wrapper.dart';
 import 'package:healthyguppy/services/app_initializer.dart';
+import 'package:healthyguppy/services/jadwal_checker_service.dart';
 import 'package:healthyguppy/services/notification_service.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 void main() async {
@@ -14,6 +16,7 @@ void main() async {
   // 2. Inisialisasi NotificationService setelah binding siap
   await NotificationService.init();
 
+  await initializeDateFormatting('id_ID', null);
   
   // 3. Inisialisasi Firebase dan service lainnya
   await AppInitializer.initialize();

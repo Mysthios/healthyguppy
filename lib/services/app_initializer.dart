@@ -1,7 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:healthyguppy/firebase_options.dart';
-import 'package:healthyguppy/services/alarm_service.dart';
 import 'package:healthyguppy/services/notification_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'dart:io';
@@ -18,7 +17,7 @@ class AppInitializer {
       await _requestNotificationPermissions();
       
       // Inisialisasi alarm dan notifikasi
-      await _initAlarmAndNotification();
+      // await _initAlarmAndNotification();
       
       // // Start background services
       // await _initBackgroundServices();
@@ -88,12 +87,12 @@ class AppInitializer {
     }
   }
 
-  static Future _initAlarmAndNotification() async {
-    debugPrint('⏰ Initializing alarm and notification services...');
-    await AlarmService.initialize();
-    await AlarmService.scheduleActiveAlarms();
-    debugPrint('✅ Alarm and notification services initialized');
-  }
+  // static Future _initAlarmAndNotification() async {
+  //   debugPrint('⏰ Initializing alarm and notification services...');
+  //   await AlarmService.initialize();
+  //   await AlarmService.scheduleActiveAlarms();
+  //   debugPrint('✅ Alarm and notification services initialized');
+  // }
 
   // static Future _initBackgroundServices() async {
   //   debugPrint('🔄 Initializing background services...');
