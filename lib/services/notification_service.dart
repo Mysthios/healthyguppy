@@ -320,22 +320,4 @@ class NotificationService {
       return [];
     }
   }
-
-  // Method untuk testing notifikasi
-  static Future<void> testNotification() async {
-    await showNotification(
-      title: 'Test Notification',
-      body: 'Ini adalah test notifikasi. Jika muncul, berarti notifikasi berfungsi!',
-    );
-  }
-
-  // Method untuk testing scheduled notification
-  static Future<void> testScheduledNotification() async {
-    final scheduledTime = DateTime.now().add(const Duration(seconds: 10));
-    await scheduleNotification(
-      title: 'Test Scheduled Notification',
-      body: 'Ini adalah test scheduled notifikasi setelah 10 detik!',
-      scheduledDate: scheduledTime,
-    );
-  }
 }

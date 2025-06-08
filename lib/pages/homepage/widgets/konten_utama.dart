@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:healthyguppy/pages/homepage/widgets/info_card_row.dart';
 import 'package:healthyguppy/pages/homepage/widgets/jadwal_pakan_card.dart';
-import 'package:healthyguppy/pages/homepage/widgets/pakan_button.dart';
+
 
 class KontenUtama extends StatelessWidget {
   const KontenUtama({super.key});
@@ -15,7 +15,7 @@ class KontenUtama extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: const [
-            PakanButton(),
+            // PakanButton(),
             SizedBox(height: 16),
             InfoCards(),
             SizedBox(height: 16),

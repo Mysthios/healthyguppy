@@ -31,32 +31,23 @@ class Notifikasipage extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.notifications_none,
-                    size: 64,
-                    color: Colors.grey,
-                  ),
+                  Icon(Icons.notifications_none, size: 64, color: Colors.grey),
                   SizedBox(height: 16),
                   Text(
                     'Belum ada notifikasi',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
                   ),
                   SizedBox(height: 8),
                   Text(
                     'Notifikasi akan muncul di sini\nketika ada jadwal yang aktif',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(color: Colors.grey),
                   ),
                 ],
               ),
             );
           }
-          
+
           return RefreshIndicator(
             onRefresh: () async {
               // Force refresh data
@@ -68,7 +59,7 @@ class Notifikasipage extends ConsumerWidget {
                 final notif = notifs[index];
                 final isToday = _isToday(notif.waktu);
                 final timeAgo = _getTimeAgo(notif.waktu);
-                
+
                 return Card(
                   margin: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -95,10 +86,7 @@ class Notifikasipage extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 4),
-                        Text(
-                          notif.isi,
-                          style: const TextStyle(fontSize: 14),
-                        ),
+                        Text(notif.isi, style: const TextStyle(fontSize: 14)),
                         const SizedBox(height: 8),
                         Row(
                           children: [
@@ -168,49 +156,47 @@ class Notifikasipage extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Memuat notifikasi...'),
-            ],
-          ),
-        ),
-        error: (err, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red,
+        loading:
+            () => const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Memuat notifikasi...'),
+                ],
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Terjadi kesalahan',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+            ),
+        error:
+            (err, stack) => Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Terjadi kesalahan',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Error: $err',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      ref.invalidate(notifikasiListProvider);
+                    },
+                    child: const Text('Coba Lagi'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Error: $err',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.grey),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  ref.invalidate(notifikasiListProvider);
-                },
-                child: const Text('Coba Lagi'),
-              ),
-            ],
-          ),
-        ),
+            ),
       ),
     );
   }
@@ -219,8 +205,8 @@ class Notifikasipage extends ConsumerWidget {
   bool _isToday(DateTime date) {
     final now = DateTime.now();
     return date.year == now.year &&
-           date.month == now.month &&
-           date.day == now.day;
+        date.month == now.month &&
+        date.day == now.day;
   }
 
   // Helper method untuk mendapatkan "time ago" format
@@ -245,40 +231,37 @@ class Notifikasipage extends ConsumerWidget {
   void _showNotificationDetails(BuildContext context, notif) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(notif.judul),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              notif.isi,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            Row(
+      builder:
+          (context) => AlertDialog(
+            title: Text(notif.judul),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.schedule, size: 16),
-                const SizedBox(width: 8),
-                Text(
-                  DateFormat('EEEE, dd MMMM yyyy - HH:mm', 'id_ID')
-                      .format(notif.waktu),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                Text(notif.isi, style: const TextStyle(fontSize: 16)),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Icon(Icons.schedule, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      DateFormat(
+                        'EEEE, dd MMMM yyyy - HH:mm',
+                        'id_ID',
+                      ).format(notif.waktu),
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Tutup'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Tutup'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -286,34 +269,34 @@ class Notifikasipage extends ConsumerWidget {
   void _showClearAllDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus Semua Notifikasi'),
-        content: const Text(
-          'Apakah Anda yakin ingin menghapus semua riwayat notifikasi?'
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              // TODO: Implement clear all notifications
-              // await ref.read(firebaseServiceProvider).clearAllNotifications();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Semua notifikasi telah dihapus'),
-                ),
-              );
-            },
-            child: const Text(
-              'Hapus',
-              style: TextStyle(color: Colors.red),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Hapus Semua Notifikasi'),
+            content: const Text(
+              'Apakah Anda yakin ingin menghapus semua riwayat notifikasi?',
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Batal'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  // TODO: Implement clear all notifications
+                  await ref
+                      .read(firebaseServiceProvider)
+                      .clearAllNotifications();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Semua notifikasi telah dihapus'),
+                    ),
+                  );
+                },
+                child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }
