@@ -640,7 +640,7 @@ class _PopupTambahUpdateJadwalState
   late Animation<double> _slideAnimation;
 
   // Instance dari JadwalCheckerService untuk menggunakan logika yang sama
-  final JadwalCheckerService _jadwalChecker = JadwalCheckerService();
+  final JadwalCheckerService _jadwalChecker = JadwalCheckerService(providerContainer: ProviderContainer());
 
   final List<String> semuaHari = [
     'Minggu',

@@ -376,16 +376,16 @@ class _InfoCardsState extends ConsumerState<InfoCards> {
   // 🔥 Method untuk mendapatkan warna berdasarkan status pakan
   Color _getPakanStatusColor(int sisaPakan) {
     if (sisaPakan <= 0) return Colors.red;
-    if (sisaPakan <= 10) return Colors.orange;
-    if (sisaPakan <= 20) return Colors.yellow[700]!;
+    if (sisaPakan <= 35) return Colors.orange;
+    if (sisaPakan <= 70) return Colors.yellow[700]!;
     return Colors.green;
   }
 
   // 🔥 Method untuk mendapatkan icon berdasarkan status pakan
   IconData _getPakanStatusIcon(int sisaPakan) {
     if (sisaPakan <= 0) return Icons.warning;
-    if (sisaPakan <= 10) return Icons.error_outline;
-    if (sisaPakan <= 20) return Icons.info_outline;
+    if (sisaPakan <= 35) return Icons.error_outline;
+    if (sisaPakan <= 70) return Icons.info_outline;
     return Icons.check_circle;
   }
 

@@ -5,7 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:healthyguppy/pages/login/loginpage.dart';
 import 'package:healthyguppy/pages/homepage/homepage.dart';
 import 'package:healthyguppy/provider/jadwal_provider.dart';
-import 'package:healthyguppy/services/jadwal_checker_service.dart'; // Import jadwal checker
+import 'package:healthyguppy/provider/riverpod_provider.dart';
+import 'package:healthyguppy/services/jadwal_checker_service.dart';
+
+// ✅ SOLUSI TERBAIK: Gunakan Provider untuk JadwalCheckerService
+final jadwalCheckerServiceProvider = Provider<JadwalCheckerService>((ref) {
+  return JadwalCheckerService(providerContainer: ref.container);
+});
 
 class AuthWrapper extends ConsumerStatefulWidget {
   const AuthWrapper({Key? key}) : super(key: key);
@@ -17,29 +23,21 @@ class AuthWrapper extends ConsumerStatefulWidget {
 class _AuthWrapperState extends ConsumerState<AuthWrapper> {
   bool _splashFinished = false;
   Timer? _splashTimer;
-  JadwalCheckerService? _jadwalChecker;
+  
+  // ✅ Tidak perlu instance variable lagi, langsung gunakan provider
 
   @override
   void initState() {
     super.initState();
     _startSplashTimer();
-    _initJadwalChecker();
-  }
-
-  void _initJadwalChecker() {
-    _jadwalChecker = JadwalCheckerService();
+    print('🚀 AuthWrapper initialized');
   }
 
   void _startSplashTimer() {
     print('AuthWrapper: Starting 5 second splash timer...');
-
-    // Reset state
     _splashFinished = false;
-
-    // Cancel existing timer if any
     _splashTimer?.cancel();
 
-    // Start new timer
     _splashTimer = Timer(const Duration(seconds: 5), () {
       if (mounted) {
         print('AuthWrapper: Splash timer completed!');
@@ -53,7 +51,6 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper> {
   @override
   void didUpdateWidget(AuthWrapper oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Restart timer on hot reload
     if (!_splashFinished) {
       print('AuthWrapper: Hot reload detected, restarting splash timer');
       _startSplashTimer();
@@ -63,7 +60,13 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper> {
   @override
   void dispose() {
     _splashTimer?.cancel();
-    _jadwalChecker?.stopChecking();
+    // ✅ Stop jadwal checker saat dispose
+    try {
+      final jadwalChecker = ref.read(jadwalCheckerServiceProvider);
+      jadwalChecker.stopChecking();
+    } catch (e) {
+      print('Error stopping jadwal checker: $e');
+    }
     super.dispose();
   }
 
@@ -71,28 +74,50 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
 
-    // Listen to auth state changes untuk handle jadwal checker
+    // ✅ Listen to auth state changes
     ref.listen<AsyncValue<User?>>(authStateProvider, (previous, current) {
       current.when(
         data: (user) {
           if (user != null) {
             // User login, start jadwal checker
             print('AuthWrapper: User logged in, starting jadwal checker');
-            _jadwalChecker?.restartForUser();
+            
+            // ✅ Gunakan provider untuk mengakses JadwalCheckerService
+            try {
+              final jadwalChecker = ref.read(jadwalCheckerServiceProvider);
+              jadwalChecker.restartForUser();
+              
+              // Print status pakan saat user login
+              final statusPakan = jadwalChecker.getStatusPakan();
+              print('🍽️ Status pakan saat login: $statusPakan');
+            } catch (e) {
+              print('❌ Error starting jadwal checker: $e');
+            }
           } else {
             // User logout, stop jadwal checker
             print('AuthWrapper: User logged out, stopping jadwal checker');
-            _jadwalChecker?.stopChecking();
-            // Clear jadwal dari state
-            ref.read(jadwalListProvider.notifier).clearJadwal();
+            
+            try {
+              final jadwalChecker = ref.read(jadwalCheckerServiceProvider);
+              jadwalChecker.stopChecking();
+              // Clear jadwal dari state
+              ref.read(jadwalListProvider.notifier).clearJadwal();
+            } catch (e) {
+              print('❌ Error stopping jadwal checker: $e');
+            }
           }
         },
         loading: () {
-          // Loading state
+          // Loading state - tidak perlu action
         },
         error: (error, stack) {
           print('AuthWrapper: Auth error: $error');
-          _jadwalChecker?.stopChecking();
+          try {
+            final jadwalChecker = ref.read(jadwalCheckerServiceProvider);
+            jadwalChecker.stopChecking();
+          } catch (e) {
+            print('Error stopping jadwal checker on auth error: $e');
+          }
         },
       );
     });
@@ -105,9 +130,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper> {
     );
 
     if (!_splashFinished || !authResolved) {
-      print(
-        'AuthWrapper: Showing splash - timer: $_splashFinished, auth: $authResolved',
-      );
+      print('AuthWrapper: Showing splash - timer: $_splashFinished, auth: $authResolved');
       return const AnimatedSplashScreen();
     }
 
@@ -124,6 +147,204 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper> {
   }
 }
 
+// ✅ ALTERNATIF SOLUSI: Jika ingin tetap menggunakan manual initialization
+class AuthWrapperManual extends ConsumerStatefulWidget {
+  const AuthWrapperManual({Key? key}) : super(key: key);
+
+  @override
+  ConsumerState<AuthWrapperManual> createState() => _AuthWrapperManualState();
+}
+
+class _AuthWrapperManualState extends ConsumerState<AuthWrapperManual> {
+  bool _splashFinished = false;
+  Timer? _splashTimer;
+  JadwalCheckerService? _jadwalChecker;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startSplashTimer();
+    
+    // ✅ Delay initialization hingga setelah first build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initJadwalChecker();
+    });
+  }
+
+  void _initJadwalChecker() {
+    if (_isInitialized) return;
+    
+    try {
+      // ✅ Gunakan ProviderScope.containerOf setelah widget selesai di-build
+      final container = ProviderScope.containerOf(context);
+      _jadwalChecker = JadwalCheckerService(
+        providerContainer: container,
+      );
+      _isInitialized = true;
+      print('🚀 JadwalChecker initialized with ProviderContainer');
+    } catch (e) {
+      print('❌ Error initializing JadwalChecker: $e');
+      // Retry setelah delay
+      Timer(const Duration(milliseconds: 100), () {
+        if (mounted && !_isInitialized) {
+          _initJadwalChecker();
+        }
+      });
+    }
+  }
+
+  void _startSplashTimer() {
+    print('AuthWrapper: Starting 5 second splash timer...');
+    _splashFinished = false;
+    _splashTimer?.cancel();
+
+    _splashTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) {
+        print('AuthWrapper: Splash timer completed!');
+        setState(() {
+          _splashFinished = true;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _splashTimer?.cancel();
+    _jadwalChecker?.stopChecking();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authState = ref.watch(authStateProvider);
+
+    // Ensure jadwal checker is initialized
+    if (!_isInitialized) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _initJadwalChecker();
+      });
+    }
+
+    ref.listen<AsyncValue<User?>>(authStateProvider, (previous, current) {
+      current.when(
+        data: (user) {
+          if (user != null && _jadwalChecker != null) {
+            print('AuthWrapper: User logged in, starting jadwal checker');
+            _jadwalChecker!.restartForUser();
+            
+            final statusPakan = _jadwalChecker!.getStatusPakan();
+            print('🍽️ Status pakan saat login: $statusPakan');
+          } else if (user == null && _jadwalChecker != null) {
+            print('AuthWrapper: User logged out, stopping jadwal checker');
+            _jadwalChecker!.stopChecking();
+            ref.read(jadwalListProvider.notifier).clearJadwal();
+          }
+        },
+        loading: () {},
+        error: (error, stack) {
+          print('AuthWrapper: Auth error: $error');
+          _jadwalChecker?.stopChecking();
+        },
+      );
+    });
+
+    final authResolved = authState.when(
+      data: (_) => true,
+      loading: () => false,
+      error: (_, __) => true,
+    );
+
+    if (!_splashFinished || !authResolved) {
+      return const AnimatedSplashScreen();
+    }
+
+    final user = authState.asData?.value;
+
+    if (user != null) {
+      return const HomePage(key: ValueKey('homepage'));
+    } else {
+      return const LoginPage(key: ValueKey('loginpage'));
+    }
+  }
+}
+
+// ✅ SOLUSI 3: StateNotifierProvider untuk state management yang lebih baik
+final jadwalCheckerStateProvider = StateNotifierProvider<JadwalCheckerNotifier, JadwalCheckerState>((ref) {
+  return JadwalCheckerNotifier(ref.container);
+});
+
+class JadwalCheckerState {
+  final bool isRunning;
+  final String? lastStatus;
+  final bool isInitialized;
+  
+  const JadwalCheckerState({
+    this.isRunning = false,
+    this.lastStatus,
+    this.isInitialized = false,
+  });
+  
+  JadwalCheckerState copyWith({
+    bool? isRunning,
+    String? lastStatus,
+    bool? isInitialized,
+  }) {
+    return JadwalCheckerState(
+      isRunning: isRunning ?? this.isRunning,
+      lastStatus: lastStatus ?? this.lastStatus,
+      isInitialized: isInitialized ?? this.isInitialized,
+    );
+  }
+}
+
+class JadwalCheckerNotifier extends StateNotifier<JadwalCheckerState> {
+  final ProviderContainer container;
+  JadwalCheckerService? _service;
+  
+  JadwalCheckerNotifier(this.container) : super(const JadwalCheckerState()) {
+    _initialize();
+  }
+  
+  void _initialize() {
+    try {
+      _service = JadwalCheckerService(providerContainer: container);
+      state = state.copyWith(isInitialized: true);
+      print('🚀 JadwalChecker StateNotifier initialized');
+    } catch (e) {
+      print('❌ Error initializing JadwalChecker StateNotifier: $e');
+    }
+  }
+  
+  void startForUser() {
+    if (_service != null) {
+      _service!.restartForUser();
+      state = state.copyWith(isRunning: true);
+      print('✅ JadwalChecker started for user');
+    }
+  }
+  
+  void stop() {
+    if (_service != null) {
+      _service!.stopChecking();
+      state = state.copyWith(isRunning: false);
+      print('🛑 JadwalChecker stopped');
+    }
+  }
+  
+  Map<String, dynamic>? getStatusPakan() {
+    return _service?.getStatusPakan();
+  }
+  
+  @override
+  void dispose() {
+    _service?.stopChecking();
+    super.dispose();
+  }
+}
+
+// Tetap sama untuk class lainnya...
 class AnimatedSplashScreen extends StatefulWidget {
   const AnimatedSplashScreen({Key? key}) : super(key: key);
 
@@ -194,7 +415,6 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Animated Logo/Icon
               AnimatedBuilder(
                 animation: _animationController,
                 builder: (context, child) {
@@ -215,10 +435,7 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
                   );
                 },
               ),
-
               const SizedBox(height: 32),
-
-              // App Title
               AnimatedBuilder(
                 animation: _fadeAnimation,
                 builder: (context, child) {
@@ -249,10 +466,7 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
                   );
                 },
               ),
-
               const SizedBox(height: 60),
-
-              // Loading Indicator
               AnimatedBuilder(
                 animation: _fadeAnimation,
                 builder: (context, child) {
@@ -265,9 +479,7 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
                           height: 30,
                           child: CircularProgressIndicator(
                             strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         ),
                         SizedBox(height: 16),
@@ -285,52 +497,5 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
         ),
       ),
     );
-  }
-}
-
-// Widget untuk melindungi halaman yang memerlukan authentication
-class RequireAuth extends ConsumerWidget {
-  final Widget child;
-  final Widget? fallback;
-
-  const RequireAuth({
-    Key? key,
-    required this.child,
-    this.fallback,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isLoggedIn = ref.watch(isLoggedInProvider);
-
-    if (isLoggedIn) {
-      return child;
-    } else {
-      return fallback ?? 
-        const Scaffold(
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.lock_outline,
-                  size: 64,
-                  color: Colors.grey,
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Anda harus login terlebih dahulu',
-                  style: TextStyle(fontSize: 16),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Silakan login untuk mengakses fitur ini',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-        );
-    }
   }
 }
