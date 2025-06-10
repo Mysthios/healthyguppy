@@ -3,13 +3,19 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
+import '../models/suhu_model.dart';
 
 class NotificationService {
-  static final FlutterLocalNotificationsPlugin
-  _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  static final NotificationService _instance = NotificationService._internal();
+  factory NotificationService() => _instance;
+  NotificationService._internal();
+
+  static final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = 
+      FlutterLocalNotificationsPlugin();
 
   static int _notificationCounter = 1;
 
+  // Initialize notification service
   static Future<void> init() async {
     // Clean up old notifications
     try {
@@ -61,8 +67,7 @@ class NotificationService {
           AndroidNotificationChannel(
             'my_foreground',
             'Foreground Service Channel',
-            description:
-                'Channel untuk notifikasi background service HealthyGuppy',
+            description: 'Channel untuk notifikasi background service HealthyGuppy',
             importance: Importance.low,
           );
 
@@ -75,10 +80,25 @@ class NotificationService {
             importance: Importance.max,
           );
 
+      // Channel untuk suhu alerts
+      const AndroidNotificationChannel suhuChannel =
+          AndroidNotificationChannel(
+            'suhu_channel',
+            'Suhu Alerts',
+            description: 'Channel untuk notifikasi suhu alerts',
+            importance: Importance.max,
+          );
+
       await androidImplementation.createNotificationChannel(foregroundChannel);
       await androidImplementation.createNotificationChannel(jadwalChannel);
+      await androidImplementation.createNotificationChannel(suhuChannel);
       print('Notification channels created');
     }
+  }
+
+  // Instance method for backward compatibility
+  Future<void> initialize() async {
+    await init();
   }
 
   static Future<void> _resetNotificationCounter() async {
@@ -138,6 +158,44 @@ class NotificationService {
     }
   }
 
+  // Suhu alert notification
+  Future<void> showSuhuAlert(SuhuData suhuData) async {
+    if (!suhuData.isOutOfRange()) return;
+
+    final safeId = generateRandomId();
+    print('Showing suhu alert with ID: $safeId');
+
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'suhu_channel',
+      'Suhu Alerts',
+      channelDescription: 'Channel untuk notifikasi suhu alerts',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: true,
+      enableVibration: true,
+      playSound: true,
+      ticker: 'Suhu Alert',
+      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+    );
+    
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+    
+    try {
+      await _flutterLocalNotificationsPlugin.show(
+        safeId,
+        suhuData.getNotificationTitle(),
+        suhuData.getNotificationBody(),
+        platformChannelSpecifics,
+      );
+      print('Suhu alert shown successfully');
+    } catch (e) {
+      print('Error showing suhu alert: $e');
+    }
+  }
+
+  // General notification methods
   static Future<void> showNotification({
     int? id,
     required String title,
@@ -276,7 +334,7 @@ class NotificationService {
     }
   }
 
-  // 🔥 METHOD YANG HILANG - untuk cancel single notification by ID
+  // Cancel single notification by ID
   static Future<void> cancelNotification(int id) async {
     try {
       await _flutterLocalNotificationsPlugin.cancel(id);
@@ -299,7 +357,7 @@ class NotificationService {
     }
   }
 
-  static Future<void> cancelAllNotifications() async {
+  Future<void> cancelAllNotifications() async {
     try {
       await _flutterLocalNotificationsPlugin.cancelAll();
       print('All notifications canceled');
@@ -308,11 +366,9 @@ class NotificationService {
     }
   }
 
-  static Future<List<PendingNotificationRequest>>
-  getPendingNotifications() async {
+  static Future<List<PendingNotificationRequest>> getPendingNotifications() async {
     try {
-      final pending =
-          await _flutterLocalNotificationsPlugin.pendingNotificationRequests();
+      final pending = await _flutterLocalNotificationsPlugin.pendingNotificationRequests();
       print('Pending notifications count: ${pending.length}');
       return pending;
     } catch (e) {

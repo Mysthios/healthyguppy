@@ -1,8 +1,4 @@
-// import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-// final sisaPakanProvider = StateProvider<int>((ref) => 0);
-// final temperaturProvider = StateProvider<int>((ref) => 19);
-
+// riverpod_provider.dart - Fixed Version
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -10,9 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 final sisaPakanProvider = StateNotifierProvider<SisaPakanNotifier, int>(
   (ref) => SisaPakanNotifier(),
 );
-
-// Provider untuk temperatur
-final temperaturProvider = StateProvider<int>((ref) => 19);
 
 // StateNotifier untuk mengelola sisa pakan dengan fitur persistence
 class SisaPakanNotifier extends StateNotifier<int> {
@@ -83,8 +76,8 @@ class SisaPakanNotifier extends StateNotifier<int> {
     print('🎯 Pakan di-set ke: $state');
   }
 
-  // Method untuk menambah pakan (untuk isi ulang)
-  Future<void> tambahPakan({int jumlah = 1}) async {
+  // Method untuk menambah pakan (untuk isi ulang) - FIXED METHOD NAME
+  Future<void> isiPakan(int jumlah) async {
     if (state < _maxPakan) {
       final newValue = (state + jumlah).clamp(_minPakan, _maxPakan);
       state = newValue;
@@ -95,7 +88,12 @@ class SisaPakanNotifier extends StateNotifier<int> {
     }
   }
 
-  // 🔥 TAMBAHAN: Getter untuk mengakses kapasitas maksimal
+  // Alternative method name for adding pakan
+  Future<void> tambahPakan({int jumlah = 1}) async {
+    await isiPakan(jumlah);
+  }
+
+  // Getter untuk mengakses kapasitas maksimal
   int get kapasitasMaksimal => _maxPakan;
   int get kapasitasMinimal => _minPakan;
 
@@ -111,5 +109,13 @@ class SisaPakanNotifier extends StateNotifier<int> {
     if (isPakanHampirHabis) return 'Hampir Habis';
     if (isPakanPenuh) return 'Penuh';
     return 'Tersedia';
+  }
+
+  // Getter untuk warna status
+  String get warnaStatus {
+    if (isPakanHabis) return 'red';
+    if (isPakanHampirHabis) return 'orange';
+    if (state <= 70) return 'yellow';
+    return 'green';
   }
 }

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:healthyguppy/core/constant.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:healthyguppy/provider/riverpod_provider.dart';
+import 'package:healthyguppy/provider/sisaPakan_provider.dart';
+import 'package:healthyguppy/provider/suhu_provider.dart';
 
 class InfoCard extends ConsumerWidget {
   final String imagePath;
@@ -18,7 +19,7 @@ class InfoCard extends ConsumerWidget {
   @override
   Widget build(BuildContext, WidgetRef ref) {
     ref.watch(sisaPakanProvider);
-    ref.watch(temperaturProvider);
+    ref.watch(suhuStreamProvider);
 
     return Container(
       width: 165,

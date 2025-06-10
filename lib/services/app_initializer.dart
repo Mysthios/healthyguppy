@@ -13,18 +13,19 @@ class AppInitializer {
       // Inisialisasi service dasar
       await _initBasicServices();
       
-      // TAMBAHAN: Request permissions untuk notifikasi
+      // Request permissions untuk notifikasi
       await _requestNotificationPermissions();
       
-      // Inisialisasi alarm dan notifikasi
-      // await _initAlarmAndNotification();
+      // Inisialisasi NotificationService
+      await _initNotificationService();
       
-      // // Start background services
-      // await _initBackgroundServices();
+      // Start temperature monitoring (if needed)
+      // await _initTemperatureMonitoring();
       
       debugPrint('✅ App initialization completed successfully');
     } catch (e) {
       debugPrint('❌ Failed to initialize app: $e');
+      rethrow;
     }
   }
 
@@ -32,13 +33,9 @@ class AppInitializer {
     debugPrint('🔧 Initializing basic services...');
     
     // Inisialisasi Firebase
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-    
-    // TAMBAHAN: Cleanup notifikasi sebelum init ulang
-    // await NotificationService.forceCleanup();
-    
-    // Inisialisasi NotificationService
-    await NotificationService.init();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform
+    );
     
     // Inisialisasi date formatting
     await initializeDateFormatting('id_ID', null);
@@ -46,7 +43,24 @@ class AppInitializer {
     debugPrint('✅ Basic services initialized');
   }
 
-  // TAMBAHAN: Method untuk request notification permissions
+  static Future _initNotificationService() async {
+    debugPrint('🔔 Initializing notification service...');
+    
+    try {
+      // Cleanup notifikasi lama sebelum init ulang
+      await NotificationService.forceCleanup();
+      
+      // Inisialisasi NotificationService
+      await NotificationService.init();
+      
+      debugPrint('✅ Notification service initialized successfully');
+    } catch (e) {
+      debugPrint('❌ Failed to initialize notification service: $e');
+      // Don't throw error, let the app continue running
+    }
+  }
+
+  // Request notification permissions
   static Future _requestNotificationPermissions() async {
     debugPrint('🔔 Requesting notification permissions...');
     
@@ -87,17 +101,47 @@ class AppInitializer {
     }
   }
 
-  // static Future _initAlarmAndNotification() async {
-  //   debugPrint('⏰ Initializing alarm and notification services...');
-  //   await AlarmService.initialize();
-  //   await AlarmService.scheduleActiveAlarms();
-  //   debugPrint('✅ Alarm and notification services initialized');
-  // }
+  // Optional: Initialize temperature monitoring
+  static Future _initTemperatureMonitoring() async {
+    debugPrint('🌡️ Initializing temperature monitoring...');
+    
+    try {
+      // Uncomment and modify based on your TemperatureMonitorService implementation
+      // await TemperatureMonitorService.startMonitoring();
+      debugPrint('✅ Temperature monitoring started successfully');
+    } catch (e) {
+      debugPrint('❌ Failed to start temperature monitoring: $e');
+      // Don't throw error, let the app continue running
+    }
+  }
 
-  // static Future _initBackgroundServices() async {
-  //   debugPrint('🔄 Initializing background services...');
-  //   await BackgroundServiceManager.initialize();
-  //   JadwalCheckerService().startChecking();
-  //   debugPrint('✅ Background services initialized');
-  // }
+  // Method untuk stop semua monitoring services saat app ditutup
+  static Future dispose() async {
+    debugPrint('🛑 Disposing app services...');
+    
+    try {
+      // Stop temperature monitoring if running
+      // await TemperatureMonitorService.stopMonitoring();
+      
+      // Cancel all pending notifications
+      await NotificationService().cancelAllNotifications();
+      
+      debugPrint('✅ App services disposed successfully');
+    } catch (e) {
+      debugPrint('❌ Error disposing services: $e');
+    }
+  }
+
+  // Test notification functionality
+  static Future testNotification() async {
+    try {
+      await NotificationService.showNotification(
+        title: 'Test Notification',
+        body: 'App berhasil diinisialisasi dan notifikasi berfungsi!',
+      );
+      debugPrint('✅ Test notification sent');
+    } catch (e) {
+      debugPrint('❌ Test notification failed: $e');
+    }
+  }
 }
