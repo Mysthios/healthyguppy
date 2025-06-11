@@ -101,20 +101,6 @@ class AppInitializer {
     }
   }
 
-  // Optional: Initialize temperature monitoring
-  static Future _initTemperatureMonitoring() async {
-    debugPrint('🌡️ Initializing temperature monitoring...');
-    
-    try {
-      // Uncomment and modify based on your TemperatureMonitorService implementation
-      // await TemperatureMonitorService.startMonitoring();
-      debugPrint('✅ Temperature monitoring started successfully');
-    } catch (e) {
-      debugPrint('❌ Failed to start temperature monitoring: $e');
-      // Don't throw error, let the app continue running
-    }
-  }
-
   // Method untuk stop semua monitoring services saat app ditutup
   static Future dispose() async {
     debugPrint('🛑 Disposing app services...');

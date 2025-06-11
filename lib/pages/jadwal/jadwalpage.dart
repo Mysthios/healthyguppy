@@ -15,9 +15,13 @@ class HalamanJadwal extends StatelessWidget {
           const Expanded(
             child: JadwalList(),
           ),
-          const TombolTambah(),
+          // Padding di bawah untuk memberikan ruang untuk FAB
+          const SizedBox(height: 80),
         ],
       ),
+      // Floating Action Button untuk tombol tambah
+      floatingActionButton: const TombolTambah(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }

@@ -140,15 +140,6 @@ class NotificationService {
     return id;
   }
 
-  static Future<void> _loadNotificationCounter() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      _notificationCounter = prefs.getInt('notification_counter') ?? 1;
-    } catch (e) {
-      _notificationCounter = 1;
-    }
-  }
-
   static Future<void> _saveNotificationCounter() async {
     try {
       final prefs = await SharedPreferences.getInstance();

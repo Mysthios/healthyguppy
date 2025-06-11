@@ -139,6 +139,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         backgroundColor: Colors.blue,
         elevation: 0,
         centerTitle: true,
+        automaticallyImplyLeading: false, // Menghilangkan panah kembali
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),

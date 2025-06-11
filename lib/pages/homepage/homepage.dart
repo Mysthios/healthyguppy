@@ -17,11 +17,23 @@ class HomePage extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(
-          child: Stack(
-            children: const [
-              HeaderDanSalam(),
-              KontenUtama(),
-            ],
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height - 
+                          MediaQuery.of(context).padding.top - 
+                          MediaQuery.of(context).padding.bottom,
+              ),
+              // Changed from Column with Expanded to Column with mainAxisSize.min
+              child: const Column(
+                mainAxisSize: MainAxisSize.min, // This is the key fix
+                children: [
+                  HeaderDanSalam(),
+                  KontenUtama(), // Removed Expanded wrapper
+                ],
+              ),
+            ),
           ),
         ),
       ),

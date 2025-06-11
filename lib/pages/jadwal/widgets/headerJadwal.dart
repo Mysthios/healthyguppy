@@ -8,32 +8,67 @@ class HeaderJadwal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 40, 20, 20),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Tombol Kembali
+          // Modern Back Button
           GestureDetector(
-          onTap: () {
+            onTap: () {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => HomePage()),
               );
             },
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset('assets/icons/Back.png', width: 24),
-                const SizedBox(width: 4),
-                const Text('Kembali', style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: kPrimaryColor, // Ganti dengan kPrimaryColor Anda
-                )),
-              ],
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+                border: Border.all(
+                  color: kPrimaryColor.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.arrow_back_ios_rounded,
+                    size: 18,
+                    color: kPrimaryColor,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Kembali',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: kPrimaryColor,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-      
+          
+          const Spacer(),
+          
+          // Title (Optional - bisa ditambahkan)
+          const Text(
+            'Jadwal Saya',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2D3748),
+            ),
+          ),
         ],
       ),
     );

@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:healthyguppy/pages/login/loginpage.dart';
 import 'package:healthyguppy/pages/homepage/homepage.dart';
 import 'package:healthyguppy/provider/jadwal_provider.dart';
-import 'package:healthyguppy/provider/sisaPakan_provider.dart';
 import 'package:healthyguppy/services/jadwal_checker_service.dart';
 
 // ✅ SOLUSI TERBAIK: Gunakan Provider untuk JadwalCheckerService

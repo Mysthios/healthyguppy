@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:healthyguppy/models/jadwal_model.dart';
 import 'package:healthyguppy/models/notifikasi_model.dart';
-import 'package:healthyguppy/services/notification_service.dart';
 import 'package:healthyguppy/models/suhu_model.dart';
 
 class FirebaseService {
@@ -14,18 +13,17 @@ class FirebaseService {
 
   // --- SUHU MONITORING ---
   static const String _collectionName = 'Monitoring';
-  static const String _documentId = 'QiTZ7CtUxanTTlefuyOF';
-
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static const String _documentId = 'QiTZ7CtUxanTTlefUyOF';
 
   Stream<SuhuData> getSuhuStream() {
-    return _firestore
+    return _db
         .collection(_collectionName)
         .doc(_documentId)
         .snapshots()
         .map((snapshot) {
           if (snapshot.exists && snapshot.data() != null) {
-            return SuhuData.fromFirestore(snapshot.data()!);
+            final data = snapshot.data()!;
+            return SuhuData.fromFirestore(data);
           } else {
             throw Exception('Document tidak ditemukan');
           }
@@ -35,18 +33,20 @@ class FirebaseService {
   Future<SuhuData?> getCurrentSuhu() async {
     try {
       DocumentSnapshot snapshot =
-          await _firestore.collection(_collectionName).doc(_documentId).get();
+          await _db.collection(_collectionName).doc(_documentId).get();
 
       if (snapshot.exists && snapshot.data() != null) {
-        return SuhuData.fromFirestore(snapshot.data() as Map<String, dynamic>);
+        final data = snapshot.data() as Map<String, dynamic>;
+        return SuhuData.fromFirestore(data);
       }
+      
       return null;
     } catch (e) {
       throw Exception('Error mengambil data: $e');
     }
   }
 
-  // --- JADWAL (Updated dengan User ID) ---
+  // --- JADWAL ---
   Future<void> addJadwal(JadwalModel jadwal) async {
     if (_currentUserId == null) {
       throw Exception('User belum login');
@@ -57,7 +57,7 @@ class FirebaseService {
       'menit': jadwal.menit,
       'hari': jadwal.hari,
       'isActive': jadwal.isActive,
-      'userId': _currentUserId, // Tambahkan userId
+      'userId': _currentUserId,
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
@@ -67,7 +67,6 @@ class FirebaseService {
       throw Exception('User belum login');
     }
 
-    // Verifikasi bahwa jadwal ini milik user yang sedang login
     final doc = await _db.collection('jadwal').doc(id).get();
     if (!doc.exists || doc.data()?['userId'] != _currentUserId) {
       throw Exception('Jadwal tidak ditemukan atau bukan milik Anda');
@@ -87,7 +86,6 @@ class FirebaseService {
       throw Exception('User belum login');
     }
 
-    // Verifikasi bahwa jadwal ini milik user yang sedang login
     final doc = await _db.collection('jadwal').doc(id).get();
     if (!doc.exists || doc.data()?['userId'] != _currentUserId) {
       throw Exception('Jadwal tidak ditemukan atau bukan milik Anda');
@@ -96,15 +94,14 @@ class FirebaseService {
     await _db.collection('jadwal').doc(id).delete();
   }
 
-  // Stream jadwal hanya untuk user yang sedang login
   Stream<List<JadwalModel>> getJadwal() {
     if (_currentUserId == null) {
-      return Stream.value([]); // Return empty list jika belum login
+      return Stream.value([]);
     }
 
     return _db
         .collection('jadwal')
-        .where('userId', isEqualTo: _currentUserId) // Filter berdasarkan userId
+        .where('userId', isEqualTo: _currentUserId)
         .orderBy('createdAt', descending: false)
         .snapshots()
         .map((snapshot) {
@@ -121,7 +118,7 @@ class FirebaseService {
         });
   }
 
-  // --- NOTIFIKASI (Updated dengan User ID) ---
+  // --- NOTIFIKASI ---
   Future<void> addNotification(NotifikasiModel notif) async {
     if (_currentUserId == null) {
       throw Exception('User belum login');
@@ -129,7 +126,7 @@ class FirebaseService {
 
     await _db.collection('notifikasi').add({
       ...notif.toMap(),
-      'userId': _currentUserId, // Tambahkan userId
+      'userId': _currentUserId,
       'waktu': FieldValue.serverTimestamp(),
     });
   }
@@ -141,7 +138,7 @@ class FirebaseService {
 
     return _db
         .collection('notifikasi')
-        .where('userId', isEqualTo: _currentUserId) // Filter berdasarkan userId
+        .where('userId', isEqualTo: _currentUserId)
         .orderBy('waktu', descending: true)
         .snapshots()
         .map((snapshot) {
@@ -151,21 +148,16 @@ class FirebaseService {
         });
   }
 
-  // Get active schedules untuk user yang sedang login
   Future<List<NotifikasiModel>> getActiveSchedules() async {
     if (_currentUserId == null) {
       return [];
     }
 
-    final snapshot =
-        await _db
-            .collection('jadwal')
-            .where(
-              'userId',
-              isEqualTo: _currentUserId,
-            ) // Filter berdasarkan userId
-            .where('isActive', isEqualTo: true)
-            .get();
+    final snapshot = await _db
+        .collection('jadwal')
+        .where('userId', isEqualTo: _currentUserId)
+        .where('isActive', isEqualTo: true)
+        .get();
 
     final now = DateTime.now();
     final today = now.weekday;
@@ -217,36 +209,25 @@ class FirebaseService {
 
     final now = DateTime.now();
     final twoDaysAgo = now.subtract(const Duration(days: 2));
-    final snapshot =
-        await _db
-            .collection('notifikasi')
-            .where(
-              'userId',
-              isEqualTo: _currentUserId,
-            ) // Filter berdasarkan userId
-            .where('waktu', isLessThan: twoDaysAgo)
-            .get();
+    final snapshot = await _db
+        .collection('notifikasi')
+        .where('userId', isEqualTo: _currentUserId)
+        .where('waktu', isLessThan: twoDaysAgo)
+        .get();
 
     for (var doc in snapshot.docs) {
       await doc.reference.delete();
     }
   }
 
-  // Method untuk membersihkan semua data user ketika logout
-  Future<void> clearUserData() async {
-    // Method ini bisa dipanggil saat logout jika diperlukan
-    // Untuk sementara hanya untuk keperluan development
-  }
-
   Future<void> clearAllNotifications() async {
     if (_currentUserId == null) return;
 
     try {
-      final snapshot =
-          await _db
-              .collection('notifikasi')
-              .where('userId', isEqualTo: _currentUserId)
-              .get();
+      final snapshot = await _db
+          .collection('notifikasi')
+          .where('userId', isEqualTo: _currentUserId)
+          .get();
 
       final batch = _db.batch();
       for (var doc in snapshot.docs) {
@@ -254,8 +235,7 @@ class FirebaseService {
       }
       await batch.commit();
     } catch (e) {
-      print('Error clearing notifications: $e');
-      rethrow;
+      throw Exception('Error clearing notifications: $e');
     }
   }
 }

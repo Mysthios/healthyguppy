@@ -6,21 +6,47 @@ class TombolTambah extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.bottomRight,
-      child: Transform.translate(
-        offset: const Offset(20, 20),
-        child: GestureDetector(
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFFFF8A50), // Orange terang
+            Color(0xFFFF6B35), // Orange lebih gelap
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF6B35).withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
           onTap: () {
             showDialog(
               context: context,
               builder: (context) => const PopupTambahUpdateJadwal(),
             );
           },
-          child: Image.asset(
-            'assets/icons/Tambah.png',
-            width: 150,
-            height: 150,
+          child: const Icon(
+            Icons.add_rounded,
+            size: 28,
+            color: Colors.white,
           ),
         ),
       ),

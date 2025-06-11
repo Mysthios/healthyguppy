@@ -95,13 +95,13 @@ class JadwalCheckerService {
     if (_providerContainer != null) {
       try {
         // Akses SisaPakanNotifier melalui provider container
-        final sisaPakanNotifier = _providerContainer!.read(sisaPakanProvider.notifier);
+        final sisaPakanNotifier = _providerContainer.read(sisaPakanProvider.notifier);
         
         // Kurangi pakan sebanyak 1
         await sisaPakanNotifier.kurangiPakan(jumlah: 1);
         
         // Log status pakan setelah dikurangi
-        final sisaPakan = _providerContainer!.read(sisaPakanProvider);
+        final sisaPakan = _providerContainer.read(sisaPakanProvider);
         print('🍽️ Pakan otomatis berkurang. Sisa: $sisaPakan');
         
         // Cek jika pakan hampir habis atau habis
@@ -156,10 +156,10 @@ class JadwalCheckerService {
   Future<void> resetPakan() async {
     if (_providerContainer != null) {
       try {
-        final sisaPakanNotifier = _providerContainer!.read(sisaPakanProvider.notifier);
+        final sisaPakanNotifier = _providerContainer.read(sisaPakanProvider.notifier);
         await sisaPakanNotifier.resetPakan();
         
-        final sisaPakan = _providerContainer!.read(sisaPakanProvider);
+        final sisaPakan = _providerContainer.read(sisaPakanProvider);
         print('🔄 Pakan berhasil di-reset ke: $sisaPakan');
         
         // Kirim notifikasi konfirmasi reset
@@ -186,10 +186,10 @@ class JadwalCheckerService {
   Future<void> isiPakan({int jumlah = 10}) async {
     if (_providerContainer != null) {
       try {
-        final sisaPakanNotifier = _providerContainer!.read(sisaPakanProvider.notifier);
+        final sisaPakanNotifier = _providerContainer.read(sisaPakanProvider.notifier);
         await sisaPakanNotifier.tambahPakan(jumlah: jumlah);
         
-        final sisaPakan = _providerContainer!.read(sisaPakanProvider);
+        final sisaPakan = _providerContainer.read(sisaPakanProvider);
         print('➕ Pakan berhasil ditambah $jumlah. Total: $sisaPakan');
         
         // Kirim notifikasi konfirmasi
@@ -213,8 +213,8 @@ class JadwalCheckerService {
   // 🔥 PUBLIC METHOD - Cek status pakan
   Map<String, dynamic> getStatusPakan() {
     if (_providerContainer != null) {
-      final sisaPakan = _providerContainer!.read(sisaPakanProvider);
-      final sisaPakanNotifier = _providerContainer!.read(sisaPakanProvider.notifier);
+      final sisaPakan = _providerContainer.read(sisaPakanProvider);
+      final sisaPakanNotifier = _providerContainer.read(sisaPakanProvider.notifier);
       
       return {
         'sisaPakan': sisaPakan,
