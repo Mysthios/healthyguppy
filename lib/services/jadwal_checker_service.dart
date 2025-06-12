@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:healthyguppy/provider/sisaPakan_provider.dart';
 import 'package:intl/intl.dart';
 import 'notification_service.dart';
+import 'package:healthyguppy/services/pakan_service.dart';
 
 class JadwalCheckerService {
   Timer? _timer;
@@ -30,66 +31,64 @@ class JadwalCheckerService {
     _timer?.cancel();
   }
 
-  Future<void> _checkAndTriggerNotification() async {
-    // Jangan cek jika user belum login
-    if (_currentUserId == null) {
-      print('User belum login, skip notification check');
-      return;
-    }
-
-    final now = DateTime.now();
-    final currentDay = DateFormat('EEEE', 'id_ID').format(now);
-    final currentHour = now.hour;
-    final currentMinute = now.minute;
-
-    try {
-      // Hanya ambil jadwal milik user yang sedang login
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('jadwal')
-              .where(
-                'userId',
-                isEqualTo: _currentUserId,
-              ) // Filter berdasarkan userId
-              .where('isActive', isEqualTo: true) // Hanya jadwal yang aktif
-              .get();
-
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        final hariList = List<String>.from(data['hari'] ?? []);
-        final jam = data['jam'] ?? 0;
-        final menit = data['menit'] ?? 0;
-
-        // Cek apakah hari ini ada dalam daftar hari jadwal
-        bool isToday = hariList.any(
-          (hari) => hari.toLowerCase() == currentDay.toLowerCase(),
-        );
-
-        if (isToday && jam == currentHour && menit == currentMinute) {
-          print('Cocok waktu! Kirim notifikasi untuk user: $_currentUserId');
-
-          // 🔥 KURANGI PAKAN SAAT JADWAL TERPICU
-          await _kurangiPakanOtomatis();
-
-          // Gunakan method yang sama untuk generate notification text
-          final title = getNotificationTitle();
-          final body = getNotificationBody(jam, menit);
-
-          // Kirim notifikasi
-          await NotificationService.showNotification(
-            title: title,
-            body: body,
-          );
-
-          // Simpan notifikasi ke database
-          await saveNotificationToDatabase(title, body, now);
-        }
-      }
-    } catch (e) {
-      print('Error checking jadwal: $e');
-    }
+ Future<void> _checkAndTriggerNotification() async {
+  // Jangan cek jika user belum login
+  if (_currentUserId == null) {
+    print('User belum login, skip notification check');
+    return;
   }
 
+  final now = DateTime.now();
+  final currentDay = DateFormat('EEEE', 'id_ID').format(now);
+  final currentHour = now.hour;
+  final currentMinute = now.minute;
+
+  try {
+    // Hanya ambil jadwal milik user yang sedang login
+    final snapshot = await FirebaseFirestore.instance
+        .collection('jadwal')
+        .where('userId', isEqualTo: _currentUserId) // Filter berdasarkan userId
+        .where('isActive', isEqualTo: true) // Hanya jadwal yang aktif
+        .get();
+
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      final hariList = List.from(data['hari'] ?? []);
+      final jam = data['jam'] ?? 0;
+      final menit = data['menit'] ?? 0;
+
+      // Cek apakah hari ini ada dalam daftar hari jadwal
+      bool isToday = hariList.any(
+        (hari) => hari.toLowerCase() == currentDay.toLowerCase(),
+      );
+
+      if (isToday && jam == currentHour && menit == currentMinute) {
+        print('Cocok waktu! Kirim notifikasi untuk user: $_currentUserId');
+
+        // 🔥 KURANGI PAKAN SAAT JADWAL TERPICU
+        await _kurangiPakanOtomatis();
+
+        // 🤖 TRIGGER IOT SERVO PAKAN
+        await IoTActionService.triggerPakanSequence();
+
+        // Gunakan method yang sama untuk generate notification text
+        final title = getNotificationTitle();
+        final body = getNotificationBody(jam, menit);
+
+        // Kirim notifikasi
+        await NotificationService.showNotification(
+          title: title,
+          body: body,
+        );
+
+        // Simpan notifikasi ke database
+        await saveNotificationToDatabase(title, body, now);
+      }
+    }
+  } catch (e) {
+    print('Error checking jadwal: $e');
+  }
+}
   // 🔥 METHOD BARU - Kurangi pakan otomatis saat jadwal terpicu
   Future<void> _kurangiPakanOtomatis() async {
     if (_providerContainer != null) {
