@@ -118,7 +118,7 @@ class _InfoCardsState extends ConsumerState<InfoCards>
       case ConnectionStatus.connected:
         return 'Terhubung';
       case ConnectionStatus.connecting:
-        return 'Menghubungkan';
+        return 'Terhubung';
       case ConnectionStatus.disconnected:
         return 'Terputus';
       case ConnectionStatus.error:

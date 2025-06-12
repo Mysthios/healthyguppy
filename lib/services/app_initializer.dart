@@ -1,6 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:healthyguppy/firebase_options.dart';
+import 'package:healthyguppy/models/hama_model.dart';
+import 'package:healthyguppy/provider/hama_provider.dart';
 import 'package:healthyguppy/services/notification_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'dart:io';
@@ -8,6 +11,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
 class AppInitializer {
+  static ProviderContainer? _container;
+  
   static Future initialize() async {
     try {
       // Inisialisasi service dasar
@@ -18,6 +23,12 @@ class AppInitializer {
       
       // Inisialisasi NotificationService
       await _initNotificationService();
+      
+      // ✨ Inisialisasi Riverpod Container untuk monitoring
+      await _initRiverpodContainer();
+      
+      // ✨ Start hama monitoring menggunakan Riverpod
+      await _initHamaMonitoring();
       
       // Start temperature monitoring (if needed)
       // await _initTemperatureMonitoring();
@@ -56,6 +67,83 @@ class AppInitializer {
       debugPrint('✅ Notification service initialized successfully');
     } catch (e) {
       debugPrint('❌ Failed to initialize notification service: $e');
+      // Don't throw error, let the app continue running
+    }
+  }
+
+  // ✨ Inisialisasi Riverpod Container untuk background monitoring
+  static Future _initRiverpodContainer() async {
+    debugPrint('🏗️ Initializing Riverpod container...');
+    
+    try {
+      _container = ProviderContainer();
+      debugPrint('✅ Riverpod container initialized');
+    } catch (e) {
+      debugPrint('❌ Failed to initialize Riverpod container: $e');
+      throw e;
+    }
+  }
+
+  // ✨ Inisialisasi Hama Monitoring menggunakan Riverpod Providers
+  static Future _initHamaMonitoring() async {
+    debugPrint('🐛 Initializing hama monitoring with Riverpod...');
+    
+    try {
+      if (_container == null) {
+        throw Exception('Riverpod container not initialized');
+      }
+
+      // Initialize HamaNotifier - ini akan otomatis start monitoring
+      final hamaNotifier = _container!.read(hamaNotifierProvider.notifier);
+      debugPrint('📊 HamaNotifier initialized and monitoring started');
+
+      // Listen to hama data stream untuk background monitoring
+      _container!.listen<AsyncValue<HamaData>>(
+        hamaDataProvider,
+        (previous, next) {
+          next.when(
+            data: (hamaData) {
+              debugPrint('📈 Hama data updated: ${hamaData.status}');
+              
+              // Log status untuk debugging
+              if (hamaData.isHamaDetected) {
+                debugPrint('⚠️ HAMA DETECTED: ${hamaData.status}');
+              } else {
+                debugPrint('✅ No hama detected: ${hamaData.status}');
+              }
+            },
+            loading: () => debugPrint('🔄 Loading hama data...'),
+            error: (error, stackTrace) {
+              debugPrint('❌ Error in hama data stream: $error');
+            },
+          );
+        },
+        fireImmediately: true,
+      );
+
+      // Listen to hama stats untuk monitoring overview
+      _container!.listen<Map<String, dynamic>>(
+        hamaStatsProvider,
+        (previous, next) {
+          debugPrint('📊 Hama stats updated: ${next['currentStatus']} | Notifications: ${next['totalNotifications']}');
+        },
+        fireImmediately: true,
+      );
+
+      // Listen to unread alerts
+      _container!.listen<int>(
+        unreadHamaAlertsProvider,
+        (previous, next) {
+          if (next > 0) {
+            debugPrint('🔔 Unread hama alerts: $next');
+          }
+        },
+        fireImmediately: true,
+      );
+
+      debugPrint('✅ Hama monitoring initialized successfully with Riverpod');
+    } catch (e) {
+      debugPrint('❌ Failed to initialize hama monitoring: $e');
       // Don't throw error, let the app continue running
     }
   }
@@ -106,8 +194,9 @@ class AppInitializer {
     debugPrint('🛑 Disposing app services...');
     
     try {
-      // Stop temperature monitoring if running
-      // await TemperatureMonitorService.stopMonitoring();
+      // ✨ Dispose Riverpod container (otomatis stop semua providers)
+      _container?.dispose();
+      _container = null;
       
       // Cancel all pending notifications
       await NotificationService().cancelAllNotifications();
@@ -130,4 +219,88 @@ class AppInitializer {
       debugPrint('❌ Test notification failed: $e');
     }
   }
+
+  // ✨ Test hama notification
+  static Future testHamaNotification() async {
+    try {
+      await NotificationService.showNotification(
+        title: '⚠️ Hama Terdeteksi!',
+        body: 'Hama telah terdeteksi pada akuarium Anda. Segera lakukan penanganan yang diperlukan.',
+      );
+      debugPrint('✅ Test hama notification sent');
+    } catch (e) {
+      debugPrint('❌ Test hama notification failed: $e');
+    }
+  }
+
+  // ✨ Force check hama status (manual trigger)
+  static Future forceCheckHamaStatus() async {
+    try {
+      if (_container == null) {
+        debugPrint('⚠️ Riverpod container not initialized');
+        return;
+      }
+
+      final hamaNotifier = _container!.read(hamaNotifierProvider.notifier);
+      await hamaNotifier.checkHamaStatus();
+      debugPrint('✅ Force hama check completed');
+    } catch (e) {
+      debugPrint('❌ Error in force hama check: $e');
+    }
+  }
+
+  // ✨ Update hama status manually (untuk testing)
+  static Future updateHamaStatus(String status) async {
+    try {
+      if (_container == null) {
+        debugPrint('⚠️ Riverpod container not initialized');
+        return;
+      }
+
+      final hamaNotifier = _container!.read(hamaNotifierProvider.notifier);
+      await hamaNotifier.updateHamaStatus(status);
+      debugPrint('✅ Hama status updated to: $status');
+    } catch (e) {
+      debugPrint('❌ Error updating hama status: $e');
+    }
+  }
+
+  // ✨ Get current hama monitoring status
+  static Map<String, dynamic>? get hamaMonitoringStatus {
+    if (_container == null) return null;
+    
+    try {
+      return _container!.read(hamaMonitoringStatusProvider);
+    } catch (e) {
+      debugPrint('❌ Error getting hama monitoring status: $e');
+      return null;
+    }
+  }
+
+  // ✨ Get current hama stats
+  static Map<String, dynamic>? get hamaStats {
+    if (_container == null) return null;
+    
+    try {
+      return _container!.read(hamaStatsProvider);
+    } catch (e) {
+      debugPrint('❌ Error getting hama stats: $e');
+      return null;
+    }
+  }
+
+  // ✨ Get unread hama alerts count
+  static int get unreadHamaAlerts {
+    if (_container == null) return 0;
+    
+    try {
+      return _container!.read(unreadHamaAlertsProvider);
+    } catch (e) {
+      debugPrint('❌ Error getting unread hama alerts: $e');
+      return 0;
+    }
+  }
+
+  // Check if container is initialized
+  static bool get isInitialized => _container != null;
 }
